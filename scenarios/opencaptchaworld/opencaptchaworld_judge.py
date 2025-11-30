@@ -468,6 +468,7 @@ class OpenCaptchaWorldJudge(GreenAgent):
             all_attempts = []
             type_metrics_list = []
             solver_url = str(req.participants["opencaptcha_solver"])
+            previous_feedback = None  # Track feedback across all puzzle types
 
             for puzzle_type in puzzle_types:
                 ground_truth = load_ground_truth(puzzle_type)
@@ -484,7 +485,6 @@ class OpenCaptchaWorldJudge(GreenAgent):
                 type_attempts = []
                 type_correct = 0
                 type_total_time = 0.0
-                previous_feedback = None
 
                 for i, puzzle_id in enumerate(puzzle_ids):
                     # Create puzzle URL
@@ -518,10 +518,6 @@ class OpenCaptchaWorldJudge(GreenAgent):
                             )
                         )
 
-                # Send final feedback after all puzzles in this type are done
-                if previous_feedback:
-                    await self._send_final_feedback(previous_feedback, solver_url)
-                
                 # Calculate type metrics
                 type_accuracy = (type_correct / len(type_attempts)) * 100 if type_attempts else 0
                 type_avg_time = type_total_time / len(type_attempts) if type_attempts else 0
@@ -536,6 +532,11 @@ class OpenCaptchaWorldJudge(GreenAgent):
                 type_metrics_list.append(type_metrics)
                 
                 logger.info(f"{puzzle_type} metrics: {type_accuracy:.1f}% ({type_correct}/{len(type_attempts)})")
+
+            # Send final feedback after all puzzle types are evaluated
+            # Send if we have attempts (even if previous_feedback is None due to errors)
+            if all_attempts:
+                await self._send_final_feedback(previous_feedback, solver_url, all_attempts)
 
             # Calculate overall metrics
             total_correct = sum(1 for a in all_attempts if a.correct)
@@ -722,16 +723,42 @@ The expected JSON format is:
 }}"""
         return instruction
 
-    async def _send_final_feedback(self, feedback_text: str, solver_url: str) -> None:
+    async def _send_final_feedback(self, feedback_text: str | None, solver_url: str, all_attempts: list) -> None:
         """
-        Send final feedback message to the solver (fire-and-forget).
+        Send final feedback message with session summary to the solver (fire-and-forget).
 
         Args:
-            feedback_text: The feedback message to send
+            feedback_text: The feedback message for the last puzzle (None if no puzzles completed)
             solver_url: The solver's A2A endpoint
+            all_attempts: List of all puzzle attempts in this session
         """
         try:
-            logger.info(f"Sending final feedback to solver: {feedback_text[:100]}...")
+            # Calculate session statistics
+            total_puzzles = len(all_attempts)
+            successful_submissions = sum(1 for a in all_attempts if a.user_answer is not None)
+            submission_rate = (successful_submissions / total_puzzles * 100) if total_puzzles > 0 else 0
+
+            # Build session summary
+            session_summary = (
+                f"{'='*60}\n"
+                f"SESSION SUMMARY\n"
+                f"{'='*60}\n"
+                f"Total puzzles evaluated: {total_puzzles}\n"
+                f"Successful submissions: {successful_submissions}/{total_puzzles} ({submission_rate:.1f}%)\n\n"
+                f"Note: The submission rate reflects successfully parsed responses without\n"
+                f"format or network errors. This is different from accuracy, which measures\n"
+                f"correctness of answers.\n"
+                f"{'='*60}\n"
+                f"Thank you for participating in this evaluation session!"
+            )
+
+            # Prepend last puzzle feedback if available
+            if feedback_text:
+                summary = f"{feedback_text}\n\n{session_summary}"
+            else:
+                summary = session_summary
+
+            logger.info(f"Sending final feedback with summary to solver")
 
             import httpx
             from a2a.client import A2ACardResolver, ClientConfig, ClientFactory
@@ -743,7 +770,7 @@ The expected JSON format is:
                 factory = ClientFactory(config)
                 client = factory.create(agent_card)
 
-                feedback_message = create_message(text=feedback_text, context_id=None)
+                feedback_message = create_message(text=summary, context_id=None)
 
                 # Send and consume events but don't process response
                 async for _ in client.send_message(feedback_message):
