@@ -1,11 +1,11 @@
 [green_agent]
 endpoint = "http://127.0.0.1:9009"
-cmd = "python scenarios/captcha/captcha_judge.py --host 127.0.0.1 --port 9009"
+cmd = ".venv/Scripts/python.exe scenarios/captcha/captcha_judge.py --host 127.0.0.1 --port 9009"
 
 [[participants]]
 role = "captcha_solver"
 endpoint = "http://127.0.0.1:9019"
-cmd = "python scenarios/captcha/captcha_solver.py --host 127.0.0.1 --port 9019"
+cmd = ".venv/Scripts/python.exe scenarios/captcha/captcha_solver.py --host 127.0.0.1 --port 9019"
 
 [config]
 num_samples = 10
