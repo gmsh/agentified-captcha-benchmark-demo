@@ -1,48 +1,48 @@
-# Test Mode for OpenCaptchaWorld
+# Test Mode
 
-This document explains how to use the interactive "test mode" for the OpenCaptchaWorld scenario. This mode allows you to run specific puzzles, view them in a browser, and save their data representation to a file.
+This document explains how to use the `--test` mode for interactively solving and saving CAPTCHA puzzles.
 
-## How to Use Test Mode
+## Running Test Mode
 
-To run the test mode, use the following command from the root of the project:
+To run the application in test mode, use the `--test` flag with the `agentbeats-run` command. You need to provide a comma-separated list of puzzles you want to solve, in the format `type:id`.
 
-```bash
-uv run agentbeats-run scenarios/opencaptchaworld/scenario.toml --test "PUZZLE_LIST"
-```
-
-### `PUZZLE_LIST` Argument
-
-Replace `PUZZLE_LIST` with a comma-separated list of puzzles you want to test. Each puzzle is identified by its `type` and `id` in the format `type:id`.
-
-**Example:**
+### Example
 
 ```bash
-uv run agentbeats-run scenarios/opencaptchaworld/scenario.toml --test "Dice_Count:dice1.png,Geometry_Click:xiaodun_000001.png"
+uv run agentbeats-run scenarios/opencaptchaworld/scenario.toml --test "Dice_Count:dice1.png,Rotation_Match:image_1.png"
 ```
 
-This command will start a test session with two puzzles: `dice1.png` from the `Dice_Count` category and `xiaodun_000001.png` from the `Geometry_Click` category.
+This command will:
+1.  Start the puzzle server.
+2.  Open a web browser with the first puzzle (`Dice_Count:dice1.png`).
 
-## What Happens
+## Solving Puzzles
 
-When you run the command:
+In the browser, you will see the puzzle interface.
 
-1.  The necessary agent servers for the `opencaptchaworld` scenario will be started.
-2.  A new tab will automatically open in your default web browser, pointing to the test mode URL.
-3.  The first puzzle in your list will be displayed.
+1.  **Solve the Puzzle**: Interact with the interface to solve the CAPTCHA.
+2.  **Print & Next**: Instead of the usual "Download Result" button, you will see a **Print & Next** button.
+3.  **Save Output**: Clicking this button saves your answer to a JSON file in the `scenarios/opencaptchaworld/output/<Puzzle_Type>/` directory.
+4.  **Load Next Puzzle**: The interface will automatically load the next puzzle from the list you provided in the command.
 
-## Interacting with Puzzles
+This process continues until all puzzles in the list have been solved.
 
-On the puzzle page, you will see a "Print & Next" button. When you click this button:
+## Output JSON Format
 
-1.  The JSON data for the current puzzle is saved to the output directory.
-2.  The next puzzle in your list is loaded and displayed.
+The output JSON file for each puzzle will be saved with the following structure:
 
-This process continues until all puzzles in the list have been shown.
+```json
+{
+  "puzzle_type": "Dice_Count",
+  "puzzle_id": "dice1.png",
+  "answer": 89,
+  "elapsed_time": 0.5,
+  "timestamp": "2025-11-23T22:35:57.750874"
+}
+```
 
-## Output
-
-The puzzle data is saved in the `scenarios/opencaptchaworld/output/` directory. The files are organized into subdirectories based on the puzzle type.
-
-For example, the output for the `Dice_Count:dice1.png` puzzle will be saved at:
-
-`scenarios/opencaptchaworld/output/Dice_Count/dice1.png.json`
+- `puzzle_type`: The category of the CAPTCHA puzzle.
+- `puzzle_id`: The unique identifier for the specific puzzle.
+- `answer`: The solution you provided.
+- `elapsed_time`: The time taken to solve the puzzle, in seconds.
+- `timestamp`: The time when the puzzle was solved.

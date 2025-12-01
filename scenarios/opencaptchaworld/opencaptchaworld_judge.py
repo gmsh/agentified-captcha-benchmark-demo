@@ -185,16 +185,28 @@ async def api_save_puzzle_data(request):
         data = await request.json()
         puzzle_type = data.get('puzzle_type')
         puzzle_id = data.get('puzzle_id')
+        answer = data.get('answer')
+        elapsed_time = data.get('elapsed_time')
+        timestamp = data.get('timestamp')
 
         if not puzzle_type or not puzzle_id:
             return JSONResponse({'error': 'puzzle_type and puzzle_id are required'}, status_code=400)
+
+        # Create the object to save, ensuring it only has the desired fields
+        result_to_save = {
+            "puzzle_type": puzzle_type,
+            "puzzle_id": puzzle_id,
+            "answer": answer,
+            "elapsed_time": elapsed_time,
+            "timestamp": timestamp,
+        }
 
         output_dir = Path(__file__).parent / 'output' / puzzle_type
         output_dir.mkdir(parents=True, exist_ok=True)
 
         file_path = output_dir / f"{puzzle_id}.json"
         with open(file_path, 'w') as f:
-            json.dump(data, f, indent=2)
+            json.dump(result_to_save, f, indent=2)
 
         return JSONResponse({'success': True, 'message': f'Puzzle data saved to {file_path}'})
     except Exception as e:

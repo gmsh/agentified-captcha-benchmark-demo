@@ -71,40 +71,101 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function printAndNextPuzzle() {
-        if (!currentPuzzle) {
-            alert('No puzzle loaded');
+    if (!currentPuzzle) {
+        alert('No puzzle loaded');
+        return;
+    }
+
+    let answer = null;
+
+    // Get answer based on input type
+    const userAnswerInput = document.getElementById('user-answer');
+    if (currentPuzzle.input_type === 'number' || currentPuzzle.input_type === 'text') {
+        if (!userAnswerInput) {
+            alert('Answer input not found');
             return;
         }
-    
-        const result = currentPuzzle;
-    
-        fetch('/api/save_puzzle_data', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(result),
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                console.log('Puzzle data saved');
-                currentPuzzleIndex++;
-                if (currentPuzzleIndex < puzzleQueue.length) {
-                    const nextPuzzle = puzzleQueue[currentPuzzleIndex];
-                    loadPuzzle(nextPuzzle.type, nextPuzzle.id);
-                } else {
-                    showError('All puzzles completed!');
-                }
-            } else {
-                alert('Error saving puzzle data: ' + (data.error || 'Unknown error'));
+        answer = userAnswerInput.value.trim();
+        if (!answer) {
+            alert('Please provide an answer');
+            return;
+        }
+        if (currentPuzzle.input_type === 'number') {
+            answer = parseInt(answer, 10);
+            if (isNaN(answer)) {
+                answer = userAnswerInput.value.trim(); // Keep as string if not a valid number
             }
-        })
-        .catch(error => {
-            console.error('Error saving puzzle data:', error);
-            alert('Error saving puzzle data');
-        });
+        }
+    } else if (currentPuzzle.input_type === 'click' || currentPuzzle.input_type === 'place_dot') {
+        if (!clickCoordinates) {
+            alert('Please click on the image first');
+            return;
+        }
+        answer = clickCoordinates;
+    } else if (currentPuzzle.input_type === 'rotation') {
+        answer = currentRotationAngle;
+    } else if (currentPuzzle.input_type === 'slide') {
+        answer = getSliderPosition();
+    } else if (currentPuzzle.input_type === 'multiselect' || currentPuzzle.input_type === 'patch_select' || currentPuzzle.input_type === 'select_animal') {
+        answer = selectedCells;
+    } else if (currentPuzzle.input_type === 'image_grid') {
+        answer = getSelectedImages();
+    } else if (currentPuzzle.input_type === 'bingo_swap') {
+        answer = bingoSelectedCells;
+    } else if (currentPuzzle.input_type === 'image_matching' || currentPuzzle.input_type === 'dart_count' || currentPuzzle.input_type === 'object_match' || currentPuzzle.input_type === 'connect_icon') {
+        answer = getCurrentOptionIndex();
+    } else if (currentPuzzle.input_type === 'click_order') {
+        answer = getClickOrderPositions();
+    } else if (currentPuzzle.input_type === 'hold_button') {
+        answer = getHoldButtonTime();
+    } else {
+        alert('Unknown input type: ' + currentPuzzle.input_type);
+        return;
     }
+
+    // Create result object right before sending
+    const result = {
+        puzzle_type: currentPuzzle.puzzle_type,
+        puzzle_id: currentPuzzle.puzzle_id,
+        answer: answer,
+        elapsed_time: (Date.now() - puzzleStartTime) / 1000,
+        timestamp: new Date().toISOString()
+    };
+
+    fetch('/api/save_puzzle_data', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(result),
+    })
+    .then(response => {
+        if (!response.ok) {
+            return response.json().then(err => {
+                throw new Error(err.error || 'Server error');
+            });
+        }
+        return response.json();
+    })
+    .then(data => {
+        if (data.success) {
+            console.log('Puzzle data saved:', data.message);
+            currentPuzzleIndex++;
+            if (currentPuzzleIndex < puzzleQueue.length) {
+                const nextPuzzle = puzzleQueue[currentPuzzleIndex];
+                loadPuzzle(nextPuzzle.type, nextPuzzle.id);
+            } else {
+                showError('All puzzles completed!');
+            }
+        } else {
+            alert('Error saving puzzle data: ' + (data.error || 'Unknown error'));
+        }
+    })
+    .catch(error => {
+        console.error('Error saving puzzle data:', error);
+        alert('Error saving puzzle data: ' + error.message);
+    });
+}
 
     function loadPuzzle(puzzleType, puzzleId) {
         // Reset state
