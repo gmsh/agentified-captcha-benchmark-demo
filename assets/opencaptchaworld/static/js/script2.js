@@ -907,7 +907,10 @@ document.addEventListener('DOMContentLoaded', () => {
         const puzzleImg = document.createElement('img');
         puzzleImg.id = 'puzzle-image';
         puzzleImg.src = currentPuzzle.image_path;
-        puzzleImg.style.width = '100%';
+        
+        puzzleImg.style.maxWidth = '100%';
+        puzzleImg.style.height = 'auto';
+        puzzleImg.style.maxHeight = 'none';
         puzzleImg.style.display = 'block';
 
         puzzleImgWrapper.appendChild(puzzleImg);
