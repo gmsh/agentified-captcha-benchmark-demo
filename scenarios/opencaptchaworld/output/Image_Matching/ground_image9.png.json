@@ -1,16 +1,10 @@
 {
   "puzzle_type": "Image_Matching",
-  "image_path": "/captcha_data/Image_Matching/ground_image9.png",
   "puzzle_id": "ground_image9.png",
   "prompt": "Using the arrows, match the animal in the left and right image.",
   "input_type": "image_matching",
-  "reference_image": "/captcha_data/Image_Matching/ground_image2_sub3.png",
-  "option_images": [
-    "/captcha_data/Image_Matching/ground_image1.png",
-    "/captcha_data/Image_Matching/ground_image3.png",
-    "/captcha_data/Image_Matching/ground_image4.png",
-    "/captcha_data/Image_Matching/ground_image6.png",
-    "/captcha_data/Image_Matching/ground_image5.png"
-  ],
-  "current_option_index": 0
+  "image_path": "/captcha_data/Image_Matching/ground_image9.png",
+  "answer": 0,
+  "elapsed_time": 1.838,
+  "timestamp": "2025-12-01T04:50:00.443Z"
 }

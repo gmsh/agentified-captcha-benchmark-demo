@@ -1,23 +1,10 @@
 {
   "puzzle_type": "Dart_Count",
-  "image_path": "/captcha_data/Dart_Count/dart_puzzle_1.json",
   "puzzle_id": "dart_puzzle_1.json",
   "prompt": "Use the arrows to pick the image where all the darts add up to the number in the left image.",
   "input_type": "dart_count",
-  "reference_image": "/captcha_data/Dart_Count/reference_num19.png",
-  "option_images": [
-    "/captcha_data/Dart_Count/1darts_1.png",
-    "/captcha_data/Dart_Count/1darts_2.png",
-    "/captcha_data/Dart_Count/2darts_1.png",
-    "/captcha_data/Dart_Count/2darts_2.png",
-    "/captcha_data/Dart_Count/2darts_3.png",
-    "/captcha_data/Dart_Count/3darts_1.png",
-    "/captcha_data/Dart_Count/3darts_2.png",
-    "/captcha_data/Dart_Count/3darts_3.png",
-    "/captcha_data/Dart_Count/3darts_4.png",
-    "/captcha_data/Dart_Count/4darts_1.png",
-    "/captcha_data/Dart_Count/4darts_2.png",
-    "/captcha_data/Dart_Count/4darts_3.png"
-  ],
-  "current_option_index": 0
+  "image_path": "/captcha_data/Dart_Count/dart_puzzle_1.json",
+  "answer": 9,
+  "elapsed_time": 31.578,
+  "timestamp": "2025-12-01T04:43:44.304Z"
 }

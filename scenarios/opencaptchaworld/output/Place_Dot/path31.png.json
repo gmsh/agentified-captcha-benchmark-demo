@@ -1,7 +1,13 @@
 {
   "puzzle_type": "Place_Dot",
-  "image_path": "/captcha_data/Place_Dot/path31.png",
   "puzzle_id": "path31.png",
   "prompt": "Click to place a Dot at the end of the car's path",
-  "input_type": "place_dot"
+  "input_type": "place_dot",
+  "image_path": "/captcha_data/Place_Dot/path31.png",
+  "answer": [
+    177,
+    353
+  ],
+  "elapsed_time": 2.896,
+  "timestamp": "2025-12-01T04:53:42.926Z"
 }

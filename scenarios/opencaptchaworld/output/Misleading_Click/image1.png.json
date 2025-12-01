@@ -1,7 +1,13 @@
 {
   "puzzle_type": "Misleading_Click",
-  "image_path": "/captcha_data/Misleading_Click/image1.png",
   "puzzle_id": "image1.png",
   "prompt": "Click the image to continue.",
-  "input_type": "click"
+  "input_type": "click",
+  "image_path": "/captcha_data/Misleading_Click/image1.png",
+  "answer": [
+    103,
+    115
+  ],
+  "elapsed_time": 16.196,
+  "timestamp": "2025-12-01T04:51:09.154Z"
 }

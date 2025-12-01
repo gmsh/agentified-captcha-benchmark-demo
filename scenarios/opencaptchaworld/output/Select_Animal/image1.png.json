@@ -1,11 +1,12 @@
 {
   "puzzle_type": "Select_Animal",
-  "image_path": "/captcha_data/Select_Animal/image1.png",
   "puzzle_id": "image1.png",
   "prompt": "Pick a fox",
   "input_type": "select_animal",
-  "grid_size": [
-    2,
-    3
-  ]
+  "image_path": "/captcha_data/Select_Animal/image1.png",
+  "answer": [
+    5
+  ],
+  "elapsed_time": 5.092,
+  "timestamp": "2025-12-01T04:55:11.267Z"
 }

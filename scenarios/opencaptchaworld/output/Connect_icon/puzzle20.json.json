@@ -1,19 +1,10 @@
 {
   "puzzle_type": "Connect_icon",
-  "image_path": "/captcha_data/Connect_icon/puzzle20.json",
   "puzzle_id": "puzzle20.json",
   "prompt": "Using the arrows, connect the same two icons with the dotted line as shown on the left.",
   "input_type": "connect_icon",
-  "reference_image": "/captcha_data/Connect_icon/reference20.png",
-  "option_images": [
-    "/captcha_data/Connect_icon/image19.png",
-    "/captcha_data/Connect_icon/image15.png",
-    "/captcha_data/Connect_icon/image13.png",
-    "/captcha_data/Connect_icon/image14.png",
-    "/captcha_data/Connect_icon/image16.png",
-    "/captcha_data/Connect_icon/image18.png",
-    "/captcha_data/Connect_icon/image17.png",
-    "/captcha_data/Connect_icon/image20.png"
-  ],
-  "current_option_index": 0
+  "image_path": "/captcha_data/Connect_icon/puzzle20.json",
+  "answer": 7,
+  "elapsed_time": 9.336,
+  "timestamp": "2025-12-01T04:41:54.396Z"
 }

@@ -1,16 +1,10 @@
 {
   "puzzle_type": "Coordinates",
-  "image_path": "/captcha_data/Coordinates/coordinate_sample1.png",
   "puzzle_id": "coordinate_sample1.png",
   "prompt": "Using the arrows, move Jerry to the indicated seat",
   "input_type": "image_matching",
-  "reference_image": "/captcha_data/Coordinates/coordinate1.png",
-  "option_images": [
-    "/captcha_data/Coordinates/jerry1.png",
-    "/captcha_data/Coordinates/jerry2.png",
-    "/captcha_data/Coordinates/jerry3.png",
-    "/captcha_data/Coordinates/jerry4.png",
-    "/captcha_data/Coordinates/jerry5.png"
-  ],
-  "current_option_index": 0
+  "image_path": "/captcha_data/Coordinates/coordinate_sample1.png",
+  "answer": 4,
+  "elapsed_time": 23.753,
+  "timestamp": "2025-12-01T04:42:42.148Z"
 }

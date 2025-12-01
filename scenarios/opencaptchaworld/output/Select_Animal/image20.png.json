@@ -1,11 +1,12 @@
 {
   "puzzle_type": "Select_Animal",
-  "image_path": "/captcha_data/Select_Animal/image20.png",
   "puzzle_id": "image20.png",
   "prompt": "Pick a tiger",
   "input_type": "select_animal",
-  "grid_size": [
-    2,
+  "image_path": "/captcha_data/Select_Animal/image20.png",
+  "answer": [
     3
-  ]
+  ],
+  "elapsed_time": 2.79,
+  "timestamp": "2025-12-01T04:55:17.415Z"
 }

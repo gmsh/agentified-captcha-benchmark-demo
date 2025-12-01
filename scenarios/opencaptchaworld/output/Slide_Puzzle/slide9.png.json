@@ -1,9 +1,13 @@
 {
   "puzzle_type": "Slide_Puzzle",
-  "image_path": "/captcha_data/Slide_Puzzle/slide9.png",
   "puzzle_id": "slide9.png",
   "prompt": "Drag the slider component to the correct position",
   "input_type": "slide",
-  "component_image": "/captcha_data/Slide_Puzzle/slide9_component.png",
-  "background_image": "/captcha_data/Slide_Puzzle/slide9.png"
+  "image_path": "/captcha_data/Slide_Puzzle/slide9.png",
+  "answer": [
+    289,
+    146
+  ],
+  "elapsed_time": 5.019,
+  "timestamp": "2025-12-01T04:54:59.658Z"
 }

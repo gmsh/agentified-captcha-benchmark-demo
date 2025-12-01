@@ -1,16 +1,10 @@
 {
   "puzzle_type": "Object_Match",
-  "image_path": "/captcha_data/Object_Match/example1.png",
   "puzzle_id": "example1.png",
   "prompt": "Use the arrows to change the number of objects until it matches the left image.",
   "input_type": "object_match",
-  "reference_image": "/captcha_data/Object_Match/reference1.png",
-  "option_images": [
-    "/captcha_data/Object_Match/image1.png",
-    "/captcha_data/Object_Match/image3.png",
-    "/captcha_data/Object_Match/image5.png",
-    "/captcha_data/Object_Match/image6.png",
-    "/captcha_data/Object_Match/image8.png"
-  ],
-  "current_option_index": 0
+  "image_path": "/captcha_data/Object_Match/example1.png",
+  "answer": 0,
+  "elapsed_time": 9.878,
+  "timestamp": "2025-12-01T04:52:08.373Z"
 }

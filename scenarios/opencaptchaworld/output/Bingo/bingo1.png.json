@@ -1,7 +1,13 @@
 {
   "puzzle_type": "Bingo",
-  "image_path": "/captcha_data/Bingo/bingo1.png",
   "puzzle_id": "bingo1.png",
   "prompt": "Please click two images to exchange their position to line up the same images to a line, you can only exchange the images once.",
-  "input_type": "bingo_swap"
+  "input_type": "bingo_swap",
+  "image_path": "/captcha_data/Bingo/bingo1.png",
+  "answer": [
+    7,
+    0
+  ],
+  "elapsed_time": 6.751,
+  "timestamp": "2025-12-01T04:38:22.616Z"
 }

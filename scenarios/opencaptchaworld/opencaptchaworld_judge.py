@@ -185,20 +185,37 @@ async def api_save_puzzle_data(request):
         data = await request.json()
         puzzle_type = data.get('puzzle_type')
         puzzle_id = data.get('puzzle_id')
+        user_answer = data.get('user_answer')
 
         if not puzzle_type or not puzzle_id:
             return JSONResponse({'error': 'puzzle_type and puzzle_id are required'}, status_code=400)
+
+        # Create output data with all information
+        output_data = {
+            'puzzle_type': puzzle_type,
+            'puzzle_id': puzzle_id,
+            'prompt': data.get('prompt'),
+            'input_type': data.get('input_type'),
+            'image_path': data.get('image_path'),
+            'answer': user_answer,
+            'elapsed_time': data.get('elapsed_time'),
+            'timestamp': data.get('timestamp')
+        }
 
         output_dir = Path(__file__).parent / 'output' / puzzle_type
         output_dir.mkdir(parents=True, exist_ok=True)
 
         file_path = output_dir / f"{puzzle_id}.json"
         with open(file_path, 'w') as f:
-            json.dump(data, f, indent=2)
+            json.dump(output_data, f, indent=2)
+
+        logger.info(f"Saved puzzle data to {file_path}: user_answer={user_answer}")
 
         return JSONResponse({'success': True, 'message': f'Puzzle data saved to {file_path}'})
     except Exception as e:
         logger.error(f"Error saving puzzle data: {e}")
+        import traceback
+        traceback.print_exc()
         return JSONResponse({'error': 'Failed to save puzzle data'}, status_code=500)
 
 
