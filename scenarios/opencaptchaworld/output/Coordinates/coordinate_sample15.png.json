@@ -1,0 +1,10 @@
+{
+  "puzzle_type": "Coordinates",
+  "puzzle_id": "coordinate_sample15.png",
+  "prompt": "Using the arrows, move Jerry to the indicated seat",
+  "input_type": "image_matching",
+  "image_path": "/captcha_data/Coordinates/coordinate_sample15.png",
+  "answer": 4,
+  "elapsed_time": 8.684,
+  "timestamp": "2025-12-01T04:42:50.843Z"
+}

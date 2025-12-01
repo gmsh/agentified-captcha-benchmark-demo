@@ -1,11 +1,11 @@
 [green_agent]
 endpoint = "http://127.0.0.1:9010"
-cmd = "python3 scenarios/opencaptchaworld/opencaptchaworld_judge.py --host 127.0.0.1 --port 9010"
+cmd =  ".venv/Scripts/python.exe scenarios/opencaptchaworld/opencaptchaworld_judge.py --host 127.0.0.1 --port 9010"
 
 [[participants]]
 role = "opencaptcha_solver"
 endpoint = "http://127.0.0.1:9020"
-cmd = "python3 scenarios/opencaptchaworld/opencaptchaworld_solver.py --host 127.0.0.1 --port 9020 --mode ground_truth"
+cmd = ".venv/Scripts/python.exe scenarios/opencaptchaworld/opencaptchaworld_solver.py --host 127.0.0.1 --port 9020 --mode ground_truth"
 
 [config]
 # List of puzzle types to test (empty list or omit to test all types)

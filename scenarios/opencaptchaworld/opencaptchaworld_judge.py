@@ -185,20 +185,37 @@ async def api_save_puzzle_data(request):
         data = await request.json()
         puzzle_type = data.get('puzzle_type')
         puzzle_id = data.get('puzzle_id')
+        user_answer = data.get('user_answer')
 
         if not puzzle_type or not puzzle_id:
             return JSONResponse({'error': 'puzzle_type and puzzle_id are required'}, status_code=400)
+
+        # Create output data with all information
+        output_data = {
+            'puzzle_type': puzzle_type,
+            'puzzle_id': puzzle_id,
+            'prompt': data.get('prompt'),
+            'input_type': data.get('input_type'),
+            'image_path': data.get('image_path'),
+            'answer': user_answer,
+            'elapsed_time': data.get('elapsed_time'),
+            'timestamp': data.get('timestamp')
+        }
 
         output_dir = Path(__file__).parent / 'output' / puzzle_type
         output_dir.mkdir(parents=True, exist_ok=True)
 
         file_path = output_dir / f"{puzzle_id}.json"
         with open(file_path, 'w') as f:
-            json.dump(data, f, indent=2)
+            json.dump(output_data, f, indent=2)
+
+        logger.info(f"Saved puzzle data to {file_path}: user_answer={user_answer}")
 
         return JSONResponse({'success': True, 'message': f'Puzzle data saved to {file_path}'})
     except Exception as e:
         logger.error(f"Error saving puzzle data: {e}")
+        import traceback
+        traceback.print_exc()
         return JSONResponse({'error': 'Failed to save puzzle data'}, status_code=500)
 
 
@@ -491,6 +508,7 @@ class OpenCaptchaWorldJudge(GreenAgent):
             all_attempts = []
             type_metrics_list = []
             solver_url = str(req.participants["opencaptcha_solver"])
+            previous_feedback = None  # Track feedback across all puzzle types
 
             for puzzle_type in puzzle_types:
                 ground_truth = load_ground_truth(puzzle_type)
@@ -507,27 +525,30 @@ class OpenCaptchaWorldJudge(GreenAgent):
                 type_attempts = []
                 type_correct = 0
                 type_total_time = 0.0
-                
+
                 for i, puzzle_id in enumerate(puzzle_ids):
                     # Create puzzle URL
                     puzzle_url = f"http://{self._host}:{self._port}/get_puzzle?type={puzzle_type}&id={puzzle_id}"
-                    
-                    # Send to solver
-                    attempt = await self.evaluate_puzzle(
-                        puzzle_url, puzzle_type, puzzle_id, 
-                        ground_truth[puzzle_id], solver_url
+
+                    # Send to solver with previous feedback merged
+                    attempt, feedback = await self.evaluate_puzzle(
+                        puzzle_url, puzzle_type, puzzle_id,
+                        ground_truth[puzzle_id], solver_url, previous_feedback
                     )
-                    
+
                     type_attempts.append(attempt)
                     all_attempts.append(attempt)
-                    
+
                     if attempt.correct:
                         type_correct += 1
                     type_total_time += attempt.elapsed_time
-                    
+
                     status = "✓" if attempt.correct else "✗"
                     logger.info(f"{status} {puzzle_type}/{puzzle_id}")
-                    
+
+                    # Store feedback for next iteration
+                    previous_feedback = feedback
+
                     # Update progress periodically
                     if (i + 1) % 5 == 0 or (i + 1) == len(puzzle_ids):
                         await updater.update_status(
@@ -536,7 +557,7 @@ class OpenCaptchaWorldJudge(GreenAgent):
                                 f"{puzzle_type}: {i + 1}/{len(puzzle_ids)} - {type_correct} correct"
                             )
                         )
-                
+
                 # Calculate type metrics
                 type_accuracy = (type_correct / len(type_attempts)) * 100 if type_attempts else 0
                 type_avg_time = type_total_time / len(type_attempts) if type_attempts else 0
@@ -551,6 +572,11 @@ class OpenCaptchaWorldJudge(GreenAgent):
                 type_metrics_list.append(type_metrics)
                 
                 logger.info(f"{puzzle_type} metrics: {type_accuracy:.1f}% ({type_correct}/{len(type_attempts)})")
+
+            # Send final feedback after all puzzle types are evaluated
+            # Send if we have attempts (even if previous_feedback is None due to errors)
+            if all_attempts:
+                await self._send_final_feedback(previous_feedback, solver_url, all_attempts)
 
             # Calculate overall metrics
             total_correct = sum(1 for a in all_attempts if a.correct)
@@ -603,13 +629,228 @@ Per-Type Results:
         finally:
             self._tool_provider.reset()
 
-    async def evaluate_puzzle(self, puzzle_url: str, puzzle_type: str, puzzle_id: str, 
-                             ground_truth_data: dict, solver_url: str) -> OpenCaptchaAttempt:
-        """Evaluate a single puzzle."""
-        # Send URL to solver
-        message = create_message(text=puzzle_url, context_id=None)
-        
-        logger.info(f"Sending puzzle URL to solver: {puzzle_url}")
+    def _validate_solver_response(self, response_text: str, puzzle_type: str, puzzle_id: str) -> tuple[bool, dict | None, str | None]:
+        """
+        Validate and parse solver's JSON response.
+
+        Args:
+            response_text: Raw text response from solver
+            puzzle_type: Expected puzzle type
+            puzzle_id: Expected puzzle ID
+
+        Returns:
+            Tuple of (is_valid, parsed_data, error_message)
+            - is_valid: True if response is valid JSON with all required fields
+            - parsed_data: Parsed JSON dict if valid, None otherwise
+            - error_message: Error description if invalid, None otherwise
+        """
+        # Step 1: Parse JSON
+        try:
+            result_data = json.loads(response_text)
+        except json.JSONDecodeError as e:
+            return False, None, f"Invalid JSON format: {str(e)}"
+
+        # Step 2: Validate it's a dictionary
+        if not isinstance(result_data, dict):
+            return False, None, f"Response must be a JSON object, got {type(result_data).__name__}"
+
+        # Step 3: Validate required fields exist
+        required_fields = ['puzzle_type', 'puzzle_id', 'answer', 'elapsed_time', 'timestamp']
+        missing_fields = [field for field in required_fields if field not in result_data]
+
+        if missing_fields:
+            return False, None, f"Missing required fields: {', '.join(missing_fields)}"
+
+        # Step 4: Validate field types (basic type checking)
+        if not isinstance(result_data.get('puzzle_type'), str):
+            return False, None, "Field 'puzzle_type' must be a string"
+
+        if not isinstance(result_data.get('puzzle_id'), str):
+            return False, None, "Field 'puzzle_id' must be a string"
+
+        if not isinstance(result_data.get('elapsed_time'), (int, float)):
+            return False, None, "Field 'elapsed_time' must be a number"
+
+        if not isinstance(result_data.get('timestamp'), str):
+            return False, None, "Field 'timestamp' must be a string"
+
+        # Step 5: Validate puzzle_type and puzzle_id match expectations
+        if result_data['puzzle_type'] != puzzle_type:
+            return False, None, f"Puzzle type mismatch: expected '{puzzle_type}', got '{result_data['puzzle_type']}'"
+
+        if result_data['puzzle_id'] != puzzle_id:
+            return False, None, f"Puzzle ID mismatch: expected '{puzzle_id}', got '{result_data['puzzle_id']}'"
+
+        return True, result_data, None
+
+    def _generate_feedback(
+        self,
+        status: str,
+        puzzle_type: str,
+        puzzle_id: str,
+        error_message: str | None = None
+    ) -> str:
+        """
+        Generate feedback message for the solver.
+
+        Args:
+            status: Feedback status identifier ("success", "invalid", "error")
+            puzzle_type: The puzzle type
+            puzzle_id: The puzzle ID
+            error_message: Optional error/diagnostic message
+
+        Returns:
+            Formatted feedback string
+        """
+        header = f"Puzzle {puzzle_type}/{puzzle_id}"
+
+        if status == "success":
+            return f"✓ Submission accepted. {header} evaluated."
+
+        if status == "invalid":
+            details = f"Details: {error_message}" if error_message else "Please ensure your response matches the expected schema."
+            feedback = (
+                f"✗ We couldn't parse your answer for {header}.\n"
+                f"{details}\n\n"
+                "We've recorded this attempt as incorrect so we can keep moving forward.\n"
+                "For the next puzzle, please send the JSON content exactly as downloaded:\n"
+                "{\n"
+                '  "puzzle_type": "string",\n'
+                '  "puzzle_id": "string",\n'
+                '  "answer": <any>,\n'
+                '  "elapsed_time": <number>,\n'
+                '  "timestamp": "string"\n'
+                "}"
+            )
+            return feedback
+
+        details = f"Details: {error_message}" if error_message else ""
+        return (
+            f"⚠️ We hit an error while processing {header}. "
+            "To keep the evaluation on track we've marked this attempt as incorrect and will continue. "
+            f"{details}".strip()
+        )
+
+    def _create_instruction_message(self, puzzle_url: str, puzzle_type: str, puzzle_id: str) -> str:
+        """
+        Create detailed instruction message for the solver.
+
+        Args:
+            puzzle_url: The puzzle URL
+            puzzle_type: The puzzle type
+            puzzle_id: The puzzle ID
+
+        Returns:
+            Formatted instruction string
+        """
+        instruction = f"""Open the URL below in a browser and solve the CAPTCHA puzzle (Type: {puzzle_type}, ID: {puzzle_id}):
+
+{puzzle_url}
+
+Instructions:
+1. Open the URL in a browser
+2. Follow the instructions shown on the page to resolve the puzzle
+3. Click the "Download Result" button to get your answer (in a json file)
+4. Send back the content of the json file in plain text without modification
+
+The expected JSON format is:
+{{
+  "puzzle_type": "string",
+  "puzzle_id": "string",
+  "answer": <any>,
+  "elapsed_time": <number>,
+  "timestamp": "string"
+}}"""
+        return instruction
+
+    async def _send_final_feedback(self, feedback_text: str | None, solver_url: str, all_attempts: list) -> None:
+        """
+        Send final feedback message with session summary to the solver (fire-and-forget).
+
+        Args:
+            feedback_text: The feedback message for the last puzzle (None if no puzzles completed)
+            solver_url: The solver's A2A endpoint
+            all_attempts: List of all puzzle attempts in this session
+        """
+        try:
+            # Calculate session statistics
+            total_puzzles = len(all_attempts)
+            successful_submissions = sum(1 for a in all_attempts if a.user_answer is not None)
+            submission_rate = (successful_submissions / total_puzzles * 100) if total_puzzles > 0 else 0
+
+            # Build session summary
+            session_summary = (
+                f"{'='*60}\n"
+                f"SESSION SUMMARY\n"
+                f"{'='*60}\n"
+                f"Total puzzles evaluated: {total_puzzles}\n"
+                f"Successful submissions: {successful_submissions}/{total_puzzles} ({submission_rate:.1f}%)\n\n"
+                f"Note: The submission rate reflects successfully parsed responses without\n"
+                f"format or network errors. This is different from accuracy, which measures\n"
+                f"correctness of answers.\n"
+                f"{'='*60}\n"
+                f"Thank you for participating in this evaluation session!"
+            )
+
+            # Prepend last puzzle feedback if available
+            if feedback_text:
+                summary = f"{feedback_text}\n\n{session_summary}"
+            else:
+                summary = session_summary
+
+            logger.info(f"Sending final feedback with summary to solver")
+
+            import httpx
+            from a2a.client import A2ACardResolver, ClientConfig, ClientFactory
+
+            async with httpx.AsyncClient(timeout=30) as httpx_client:
+                resolver = A2ACardResolver(httpx_client=httpx_client, base_url=solver_url)
+                agent_card = await resolver.get_agent_card()
+                config = ClientConfig(httpx_client=httpx_client, streaming=False)
+                factory = ClientFactory(config)
+                client = factory.create(agent_card)
+
+                feedback_message = create_message(text=summary, context_id=None)
+
+                # Send and consume events but don't process response
+                async for _ in client.send_message(feedback_message):
+                    pass
+
+            logger.info("Final feedback sent successfully")
+
+        except Exception as e:
+            # Don't fail the evaluation if feedback sending fails
+            logger.warning(f"Failed to send final feedback to solver: {e}")
+
+    async def evaluate_puzzle(self, puzzle_url: str, puzzle_type: str, puzzle_id: str,
+                             ground_truth_data: dict, solver_url: str,
+                             previous_feedback: str | None = None) -> tuple[OpenCaptchaAttempt, str]:
+        """
+        Evaluate a single puzzle.
+
+        Args:
+            puzzle_url: The puzzle URL
+            puzzle_type: The puzzle type
+            puzzle_id: The puzzle ID
+            ground_truth_data: Ground truth data for this puzzle
+            solver_url: The solver's A2A endpoint
+            previous_feedback: Optional feedback from previous puzzle to prepend
+
+        Returns:
+            Tuple of (attempt, feedback) where feedback is for this puzzle
+        """
+        # Create instruction message
+        instruction_text = self._create_instruction_message(puzzle_url, puzzle_type, puzzle_id)
+
+        # Prepend previous feedback if provided
+        if previous_feedback:
+            full_message = f"{previous_feedback}\n\n---\n\n{instruction_text}"
+        else:
+            full_message = instruction_text
+
+        message = create_message(text=full_message, context_id=None)
+
+        logger.info(f"Sending puzzle to solver: {puzzle_type}/{puzzle_id}")
 
         try:
             import httpx
@@ -636,23 +877,38 @@ Per-Type Results:
                     elif hasattr(event, 'parts'):
                         response_text = merge_parts(event.parts).strip()
 
-                # Parse JSON response
+                # Validate and parse JSON response
                 logger.info(f"Raw response from solver: {response_text[:200]}...")
-                result_data = json.loads(response_text)
-                user_answer = result_data.get('answer')
-                elapsed_time = result_data.get('elapsed_time', 0.0)
-                
-                logger.info(f"Parsed answer: {user_answer} (type: {type(user_answer)})")
+
+                is_valid, result_data, error_msg = self._validate_solver_response(
+                    response_text, puzzle_type, puzzle_id
+                )
+
+                if not is_valid:
+                    logger.error(f"Invalid response for {puzzle_id}: {error_msg}")
+                    # Generate error feedback
+                    feedback = self._generate_feedback("invalid", puzzle_type, puzzle_id, error_msg)
+                    # Mark as incorrect
+                    user_answer = None
+                    elapsed_time = 0.0
+                else:
+                    user_answer = result_data.get('answer')
+                    elapsed_time = result_data.get('elapsed_time', 0.0)
+                    logger.info(f"Parsed answer: {user_answer} (type: {type(user_answer)})")
+                    # Generate success feedback
+                    feedback = self._generate_feedback("success", puzzle_type, puzzle_id)
 
         except Exception as e:
-            logger.error(f"Error getting solution for {puzzle_id}: {e}")
+            logger.error(f"Error getting solution for {puzzle_id}: {e}", exc_info=True)
+            # Generate error feedback
+            feedback = self._generate_feedback("error", puzzle_type, puzzle_id, f"Error processing response: {str(e)}")
             user_answer = None
             elapsed_time = 0.0
 
         # Check answer
         is_correct, correct_answer = check_answer(puzzle_type, puzzle_id, user_answer, ground_truth_data)
 
-        return OpenCaptchaAttempt(
+        attempt = OpenCaptchaAttempt(
             puzzle_type=puzzle_type,
             puzzle_id=puzzle_id,
             user_answer=user_answer,
@@ -660,6 +916,8 @@ Per-Type Results:
             correct=is_correct,
             elapsed_time=elapsed_time
         )
+
+        return attempt, feedback
 
 
 async def main():

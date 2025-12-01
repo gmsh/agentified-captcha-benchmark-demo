@@ -1,0 +1,11 @@
+{
+  "puzzle_type": "Patch_Select",
+  "image_path": "/captcha_data/Patch_Select/image20.jpeg",
+  "puzzle_id": "image20.jpeg",
+  "prompt": "Select all squares with windmill",
+  "input_type": "patch_select",
+  "grid_size": [
+    5,
+    5
+  ]
+}

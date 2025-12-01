@@ -1,0 +1,13 @@
+{
+  "puzzle_type": "Pick_Area",
+  "puzzle_id": "image1.png",
+  "prompt": "Click on the center of the largest area outlined by the dotted line",
+  "input_type": "click",
+  "image_path": "/captcha_data/Pick_Area/image1.png",
+  "answer": [
+    132,
+    336
+  ],
+  "elapsed_time": 8.717,
+  "timestamp": "2025-12-01T04:52:56.761Z"
+}

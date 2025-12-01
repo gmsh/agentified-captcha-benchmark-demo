@@ -1,0 +1,10 @@
+{
+  "puzzle_type": "Image_Matching",
+  "puzzle_id": "ground_image20.png",
+  "prompt": "Using the arrows, match the animal in the left and right image.",
+  "input_type": "image_matching",
+  "image_path": "/captcha_data/Image_Matching/ground_image20.png",
+  "answer": 2,
+  "elapsed_time": 10.912,
+  "timestamp": "2025-12-01T04:49:58.595Z"
+}

@@ -1,0 +1,11 @@
+{
+  "puzzle_type": "Patch_Select",
+  "image_path": "/captcha_data/Patch_Select/image1.jpg",
+  "puzzle_id": "image1.jpg",
+  "prompt": "Select all squares with moon",
+  "input_type": "patch_select",
+  "grid_size": [
+    5,
+    5
+  ]
+}

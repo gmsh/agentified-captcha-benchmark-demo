@@ -1,0 +1,11 @@
+{
+  "puzzle_type": "Patch_Select",
+  "image_path": "/captcha_data/Patch_Select/image15.jpeg",
+  "puzzle_id": "image15.jpeg",
+  "prompt": "Select all squares with house",
+  "input_type": "patch_select",
+  "grid_size": [
+    5,
+    5
+  ]
+}

@@ -1,0 +1,16 @@
+{
+  "puzzle_type": "Image_Recognition",
+  "puzzle_id": "images8",
+  "prompt": "Select all images containing hydrant, then click submit",
+  "input_type": "image_grid",
+  "image_path": "/captcha_data/Image_Recognition/images8",
+  "answer": [
+    0,
+    1,
+    2,
+    3,
+    7
+  ],
+  "elapsed_time": 6.136,
+  "timestamp": "2025-12-01T04:50:42.901Z"
+}

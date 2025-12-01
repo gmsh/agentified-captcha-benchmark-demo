@@ -1,0 +1,27 @@
+{
+  "puzzle_type": "Click_Order",
+  "puzzle_id": "image1.png",
+  "prompt": "Click the icons in order as shown in the reference image.",
+  "input_type": "click_order",
+  "image_path": "/captcha_data/Click_Order/image1.png",
+  "answer": [
+    [
+      473,
+      95
+    ],
+    [
+      326,
+      173
+    ],
+    [
+      162,
+      78
+    ],
+    [
+      193,
+      288
+    ]
+  ],
+  "elapsed_time": 17.704,
+  "timestamp": "2025-12-01T04:36:53.747Z"
+}

@@ -1,0 +1,13 @@
+{
+  "puzzle_type": "Slide_Puzzle",
+  "puzzle_id": "slide27.png",
+  "prompt": "Drag the slider component to the correct position",
+  "input_type": "slide",
+  "image_path": "/captcha_data/Slide_Puzzle/slide27.png",
+  "answer": [
+    149,
+    279
+  ],
+  "elapsed_time": 3.714,
+  "timestamp": "2025-12-01T04:54:46.606Z"
+}

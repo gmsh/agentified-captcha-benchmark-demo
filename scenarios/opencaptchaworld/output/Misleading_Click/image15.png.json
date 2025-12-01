@@ -1,0 +1,13 @@
+{
+  "puzzle_type": "Misleading_Click",
+  "puzzle_id": "image15.png",
+  "prompt": "Click the image to continue.",
+  "input_type": "click",
+  "image_path": "/captcha_data/Misleading_Click/image15.png",
+  "answer": [
+    297,
+    259
+  ],
+  "elapsed_time": 4.93,
+  "timestamp": "2025-12-01T04:51:14.094Z"
+}

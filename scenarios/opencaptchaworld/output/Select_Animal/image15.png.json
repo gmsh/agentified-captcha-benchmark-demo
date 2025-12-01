@@ -1,0 +1,12 @@
+{
+  "puzzle_type": "Select_Animal",
+  "puzzle_id": "image15.png",
+  "prompt": "Pick a penguin",
+  "input_type": "select_animal",
+  "image_path": "/captcha_data/Select_Animal/image15.png",
+  "answer": [
+    4
+  ],
+  "elapsed_time": 3.337,
+  "timestamp": "2025-12-01T04:55:14.615Z"
+}

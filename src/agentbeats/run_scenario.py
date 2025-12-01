@@ -5,7 +5,6 @@ from pathlib import Path
 import tomllib
 import httpx
 from dotenv import load_dotenv
-import webbrowser
 
 from a2a.client import A2ACardResolver
 
@@ -96,8 +95,6 @@ def parse_toml(scenario_path: str) -> dict:
     }
 
 
-import webbrowser
-
 def main():
     parser = argparse.ArgumentParser(description="Run agent scenario")
     parser.add_argument("scenario", help="Path to scenario TOML file")
@@ -105,12 +102,7 @@ def main():
                         help="Show agent stdout/stderr")
     parser.add_argument("--serve-only", action="store_true",
                         help="Start agent servers only without running evaluation")
-    parser.add_argument("--test", type=str,
-                        help="Run in test mode with a comma-separated list of puzzles (e.g., 'type1:id1,type2:id2')")
     args = parser.parse_args()
-
-    if args.test:
-        args.serve_only = True
 
     cfg = parse_toml(args.scenario)
 
@@ -152,20 +144,12 @@ def main():
             return
 
         print("Agents started. Press Ctrl+C to stop.")
-
-        if args.test:
-            host = cfg["green_agent"]["host"]
-            port = cfg["green_agent"]["port"]
-            url = f"http://{host}:{port}/get_puzzle?test_puzzles={args.test}"
-            print(f"Opening test URL: {url}")
-            webbrowser.open(url)
-
         if args.serve_only:
             while True:
                 for proc in procs:
                     if proc.poll() is not None:
                         print(f"Agent exited with code {proc.returncode}")
-                        break
+                        return
                     time.sleep(0.5)
         else:
             client_proc = subprocess.Popen(
@@ -179,23 +163,47 @@ def main():
     except KeyboardInterrupt:
         pass
 
+    # Mac version 
+    # finally:
+    #     print("\nShutting down...")
+    #     for p in procs:
+    #         if p.poll() is None:
+    #             try:
+    #                 os.killpg(p.pid, signal.SIGTERM)
+    #             except ProcessLookupError:
+    #                 pass
+    #     time.sleep(1)
+    #     for p in procs:
+    #         if p.poll() is None:
+    #             try:
+    #                 os.killpg(p.pid, signal.SIGKILL)
+    #             except ProcessLookupError:
+    #                 pass
+    
+    # Windows version 
     finally:
         print("\nShutting down...")
         for p in procs:
             if p.poll() is None:
                 try:
-                    os.killpg(p.pid, signal.SIGTERM)
-                except ProcessLookupError:
+                    # Windows-compatible process termination
+                    if sys.platform == "win32":
+                        p.terminate()
+                    else:
+                        os.killpg(p.pid, signal.SIGTERM)
+                except (ProcessLookupError, AttributeError):
                     pass
         time.sleep(1)
         for p in procs:
             if p.poll() is None:
                 try:
-                    os.killpg(p.pid, signal.SIGKILL)
-                except ProcessLookupError:
+                    # Windows-compatible process killing
+                    if sys.platform == "win32":
+                        p.kill()
+                    else:
+                        os.killpg(p.pid, signal.SIGKILL)
+                except (ProcessLookupError, AttributeError):
                     pass
-
-
 
 if __name__ == "__main__":
     main()

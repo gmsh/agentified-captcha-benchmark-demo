@@ -65,14 +65,32 @@ class PseudoPurpleAgent:
         self.data_dir = Path(__file__).parent / 'pseudo_purple_data'
         logger.info(f"Initialized PseudoPurpleAgent in {mode} mode")
     
+    def extract_url_from_message(self, message_text: str) -> str:
+        """
+        Extract URL from message text.
+        Handles both simple URL messages and detailed instruction messages.
+        """
+        # Look for URLs in the message (http or https)
+        import re
+        url_pattern = r'https?://[^\s<>"\']+'
+        urls = re.findall(url_pattern, message_text)
+
+        if urls:
+            # Return the first URL found
+            return urls[0]
+
+        # Fallback: if no URL pattern found, assume the whole message is a URL
+        # (for backward compatibility with old simple URL messages)
+        return message_text.strip()
+
     def parse_puzzle_url(self, url: str) -> tuple[str, str]:
         """Parse puzzle URL to extract type and id."""
         parsed = urlparse(url)
         query_params = parse_qs(parsed.query)
-        
+
         puzzle_type = query_params.get('type', [None])[0]
         puzzle_id = query_params.get('id', [None])[0]
-        
+
         return puzzle_type, puzzle_id
     
     def get_fixed_answer(self, puzzle_type: str) -> any:
@@ -112,28 +130,44 @@ class SimpleSolverExecutor:
         try:
             # Extract text from the incoming message
             # The request has a 'message' field with 'parts'
-            url = None
+            message_text = None
             if hasattr(request, 'message') and hasattr(request.message, 'parts'):
                 for part in request.message.parts:
                     if hasattr(part, 'root') and hasattr(part.root, 'text'):
-                        url = part.root.text
+                        message_text = part.root.text
                         break
-            
-            if not url:
-                logger.error(f"Could not extract URL from request: {request}")
+
+            if not message_text:
+                logger.error(f"Could not extract message text from request: {request}")
                 await queue.enqueue_event(new_agent_text_message(
-                    text=json.dumps({"error": "No URL in request"})
+                    text=json.dumps({"error": "No message text in request"})
                 ))
                 return
-            
-            url = url.strip()
-            logger.info(f"Received URL: {url}")
-            
+
+            # Log incoming message for debugging
+            logger.info("="*80)
+            logger.info("INCOMING MESSAGE FROM JUDGE:")
+            logger.info("-"*80)
+            logger.info(message_text)
+            logger.info("="*80)
+
+            # Extract URL from message (handles both simple URLs and instruction messages)
+            url = self.agent.extract_url_from_message(message_text)
+
+            # If no URL found, this might be a feedback-only message (final feedback)
+            if not url or not url.startswith('http'):
+                logger.info(f"No URL found in message - treating as feedback-only message")
+                logger.info(f"Message content: {message_text[:200]}...")
+                # Don't send a response for feedback-only messages
+                return
+
+            logger.info(f"Extracted URL: {url}")
+
             start_time = time.time()
-            
+
             # Parse URL
             puzzle_type, puzzle_id = self.agent.parse_puzzle_url(url)
-            
+
             if not puzzle_type or not puzzle_id:
                 logger.error(f"Failed to parse puzzle URL: {url}")
                 await queue.enqueue_event(new_agent_text_message(
@@ -161,9 +195,17 @@ class SimpleSolverExecutor:
             }
             
             logger.info(f"Returning result: type={puzzle_type}, id={puzzle_id}, answer={answer} (type={type(answer)})")
-            
+
             # Return result as JSON text message
             result_json = json.dumps(result, indent=2)
+
+            # Log outgoing response for debugging
+            logger.info("="*80)
+            logger.info("OUTGOING RESPONSE TO JUDGE:")
+            logger.info("-"*80)
+            logger.info(result_json)
+            logger.info("="*80)
+
             await queue.enqueue_event(new_agent_text_message(text=result_json))
             
         except Exception as e:

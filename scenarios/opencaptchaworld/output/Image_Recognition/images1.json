@@ -1,0 +1,16 @@
+{
+  "puzzle_type": "Image_Recognition",
+  "puzzle_id": "images1",
+  "prompt": "Select all images containing a car, then click submit",
+  "input_type": "image_grid",
+  "image_path": "/captcha_data/Image_Recognition/images1",
+  "answer": [
+    1,
+    4,
+    7,
+    2,
+    5
+  ],
+  "elapsed_time": 11.04,
+  "timestamp": "2025-12-01T04:50:21.258Z"
+}

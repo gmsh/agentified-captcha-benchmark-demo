@@ -1,0 +1,10 @@
+{
+  "puzzle_type": "Connect_icon",
+  "puzzle_id": "puzzle20.json",
+  "prompt": "Using the arrows, connect the same two icons with the dotted line as shown on the left.",
+  "input_type": "connect_icon",
+  "image_path": "/captcha_data/Connect_icon/puzzle20.json",
+  "answer": 7,
+  "elapsed_time": 9.336,
+  "timestamp": "2025-12-01T04:41:54.396Z"
+}

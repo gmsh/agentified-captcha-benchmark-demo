@@ -1,0 +1,10 @@
+{
+  "puzzle_type": "Object_Match",
+  "puzzle_id": "example20.png",
+  "prompt": "Use the arrows to change the number of objects until it matches the left image.",
+  "input_type": "object_match",
+  "image_path": "/captcha_data/Object_Match/example20.png",
+  "answer": 2,
+  "elapsed_time": 4.51,
+  "timestamp": "2025-12-01T04:52:17.067Z"
+}

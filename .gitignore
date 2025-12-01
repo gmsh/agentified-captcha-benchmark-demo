@@ -4,3 +4,6 @@
 .venv/
 __pycache__/
 *.pyc
+docs/
+scenarios/opencaptchaworld/pseudo_purple_data
+.gitignore

@@ -1,0 +1,10 @@
+{
+  "puzzle_type": "Dice_Count",
+  "puzzle_id": "dice20.png",
+  "prompt": "Sum up the numbers on all the dice",
+  "input_type": "number",
+  "image_path": "/captcha_data/Dice_Count/dice20.png",
+  "answer": 33,
+  "elapsed_time": 15.59,
+  "timestamp": "2025-12-01T04:45:48.550Z"
+}
