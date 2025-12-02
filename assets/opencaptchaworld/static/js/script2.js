@@ -5,6 +5,8 @@ let currentRotationAngle = 0;
 let selectedCells = [];
 let bingoSelectedCells = [];
 let selectedAnimalIndex = -1;
+let clickOrderMarkers = [];
+window.clickOrderPositions = [];
 
 document.addEventListener('DOMContentLoaded', () => {
     // DOM elements
@@ -15,6 +17,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const puzzlePrompt = document.getElementById('puzzle-prompt');
     const puzzleContainer = document.getElementById('puzzle-container');
     const inputGroup = document.querySelector('.input-group');
+    const resetClicksBtn = document.getElementById('reset-clicks');
 
     // Get URL parameters
     const urlParams = new URLSearchParams(window.location.search);
@@ -31,6 +34,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 downloadResult();
             }
         });
+    }
+    if (resetClicksBtn) {
+        resetClicksBtn.addEventListener('click', handleResetClicks);
     }
 
     // Auto-load puzzle if parameters are present
@@ -54,6 +60,7 @@ document.addEventListener('DOMContentLoaded', () => {
         selectedCells = [];
         bingoSelectedCells = [];
         selectedAnimalIndex = -1;
+        resetClickOrderState();
 
         // Show loading state
         puzzleContainer.innerHTML = `
@@ -68,6 +75,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     <input type="text" id="user-answer" placeholder="Your answer">
                     <button id="download-result">Download Result</button>
                 </div>
+                <button id="reset-clicks">Reset Clicks</button>
                 <div id="result-message" class="result-message"></div>
             </div>
         `;
@@ -79,6 +87,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const newDownloadBtn = document.getElementById('download-result');
         const newUserAnswerInput = document.getElementById('user-answer');
         const newResultMessage = document.getElementById('result-message');
+        const newResetButton = document.getElementById('reset-clicks');
         const newPuzzleImageContainer = document.querySelector('.puzzle-image-container');
         const newInputGroup = document.querySelector('.input-group');
 
@@ -92,6 +101,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     downloadResult(puzzleType, puzzleId);
                 }
             });
+        }
+        if (newResetButton) {
+            newResetButton.addEventListener('click', handleResetClicks);
         }
         if (puzzleImage) {
             puzzleImage.addEventListener('click', (e) => handleImageClick(e, newPuzzleImageContainer));
@@ -130,6 +142,10 @@ document.addEventListener('DOMContentLoaded', () => {
     function renderPuzzle(data, container, inputGroupEl, puzzleImg) {
         // Clear previous puzzle content
         container.innerHTML = '';
+
+        if (data.input_type !== 'click_order') {
+            toggleResetClickButton(false);
+        }
 
         // Remove any existing controls
         const existingControls = document.querySelectorAll('.rotation-controls, .slider-component, .grid-overlay, .arrow-controls, .hold-button-container');
@@ -259,6 +275,77 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             container.appendChild(marker);
         }
+    }
+
+    function handleResetClicks() {
+        if (!currentPuzzle || currentPuzzle.input_type !== 'click_order') {
+            return;
+        }
+        if (!Array.isArray(window.clickOrderPositions) || window.clickOrderPositions.length === 0) {
+            return;
+        }
+
+        resetClickOrderState();
+        updateResetClickButtonState();
+
+        const resultMessage = document.getElementById('result-message');
+        if (resultMessage) {
+            resultMessage.textContent = 'Clicks cleared. Start again.';
+            resultMessage.style.color = '#f44336';
+        }
+    }
+
+    function toggleResetClickButton(shouldShow) {
+        const resetButton = document.getElementById('reset-clicks');
+        if (!resetButton) {
+            return;
+        }
+        if (shouldShow) {
+            resetButton.style.display = 'block';
+            updateResetClickButtonState();
+        } else {
+            resetButton.style.display = 'none';
+            resetButton.disabled = true;
+        }
+    }
+
+    function updateResetClickButtonState() {
+        const resetButton = document.getElementById('reset-clicks');
+        if (!resetButton) {
+            return;
+        }
+        const hasClicks = Array.isArray(window.clickOrderPositions) && window.clickOrderPositions.length > 0;
+        resetButton.disabled = !hasClicks;
+    }
+
+    function resetClickOrderState() {
+        window.clickOrderPositions = [];
+        clearClickOrderMarkers();
+    }
+
+    function clearClickOrderMarkers() {
+        clickOrderMarkers.forEach(marker => {
+            if (marker && marker.parentNode) {
+                marker.parentNode.removeChild(marker);
+            }
+        });
+        clickOrderMarkers = [];
+    }
+
+    function addClickOrderMarker(x, y, container, orderNumber) {
+        if (!container) {
+            return;
+        }
+        if (container.style.position !== 'relative') {
+            container.style.position = 'relative';
+        }
+        const marker = document.createElement('div');
+        marker.className = 'click-order-marker';
+        marker.textContent = orderNumber;
+        marker.style.left = `${x}px`;
+        marker.style.top = `${y}px`;
+        container.appendChild(marker);
+        clickOrderMarkers.push(marker);
     }
 
     function downloadResult(puzzleType, puzzleId) {
@@ -1002,6 +1089,10 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function setupClickOrder(container) {
+        resetClickOrderState();
+        toggleResetClickButton(true);
+        updateResetClickButtonState();
+
         // Show reference image
         const orderImg = document.createElement('img');
         orderImg.src = currentPuzzle.order_image;
@@ -1029,14 +1120,21 @@ document.addEventListener('DOMContentLoaded', () => {
         layout.appendChild(puzzleImgWrapper);
         container.appendChild(layout);
 
-        window.clickOrderPositions = [];
+        const resultMessage = document.getElementById('result-message');
 
         puzzleImg.addEventListener('click', (e) => {
             const rect = e.target.getBoundingClientRect();
             const x = Math.round(e.clientX - rect.left);
             const y = Math.round(e.clientY - rect.top);
             window.clickOrderPositions.push([x, y]);
-            showClickMarker(x, y, puzzleImgWrapper);
+            const orderNumber = window.clickOrderPositions.length;
+            addClickOrderMarker(x, y, puzzleImgWrapper, orderNumber);
+            updateResetClickButtonState();
+
+            if (resultMessage) {
+                resultMessage.textContent = `Recorded click #${orderNumber} at (${x}, ${y}).`;
+                resultMessage.style.color = '#2196F3';
+            }
         });
     }
 
