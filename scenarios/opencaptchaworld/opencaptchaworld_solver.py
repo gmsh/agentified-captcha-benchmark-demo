@@ -158,7 +158,12 @@ class SimpleSolverExecutor:
             if not url or not url.startswith('http'):
                 logger.info(f"No URL found in message - treating as feedback-only message")
                 logger.info(f"Message content: {message_text[:200]}...")
-                # Don't send a response for feedback-only messages
+                # Send acknowledgment for feedback-only messages
+                ack_message = json.dumps({
+                    "status": "acknowledged",
+                    "message": "Feedback received"
+                })
+                await queue.enqueue_event(new_agent_text_message(text=ack_message))
                 return
 
             logger.info(f"Extracted URL: {url}")
