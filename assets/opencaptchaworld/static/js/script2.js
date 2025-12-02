@@ -660,7 +660,104 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function setupPatchSelect(container) {
-        setupMultiselect(container); // Similar to multiselect
+        // Clear previous puzzle content
+        container.innerHTML = '';
+
+        // Create a container for the patch select grid
+        const gridContainer = document.createElement('div');
+        gridContainer.className = 'patch-select-grid';
+
+        // Get grid dimensions from the puzzle data
+        const gridSize = currentPuzzle.grid_size || [6, 6];
+        const rows = gridSize[0];
+        const cols = gridSize[1];
+
+        // Set grid styles
+        gridContainer.style.display = 'grid';
+        gridContainer.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
+        gridContainer.style.gridTemplateRows = `repeat(${rows}, 1fr)`;
+        gridContainer.style.gap = '3px';
+        gridContainer.style.width = '100%';
+        gridContainer.style.aspectRatio = `${cols}/${rows}`;
+        gridContainer.style.position = 'relative';
+
+        // Create image container
+        const imageContainer = document.createElement('div');
+        imageContainer.className = 'patch-select-image-container';
+        imageContainer.style.position = 'absolute';
+        imageContainer.style.top = '0';
+        imageContainer.style.left = '0';
+        imageContainer.style.width = '100%';
+        imageContainer.style.height = '100%';
+        imageContainer.style.zIndex = '0';
+
+        // Add the puzzle image
+        const img = document.createElement('img');
+        img.src = currentPuzzle.image_path;
+        img.alt = 'CAPTCHA image';
+        img.style.width = '100%';
+        img.style.height = '100%';
+        img.style.objectFit = 'cover';
+        imageContainer.appendChild(img);
+
+        // Add image container to grid container
+        gridContainer.appendChild(imageContainer);
+
+        // Create grid cells for selection
+        for (let i = 0; i < rows * cols; i++) {
+            const cell = document.createElement('div');
+            cell.className = 'patch-select-cell';
+            cell.dataset.index = i;
+            cell.style.position = 'relative';
+            cell.style.zIndex = '1';
+            cell.style.cursor = 'pointer';
+
+            // Add a checkmark icon to indicate selection
+            const checkmark = document.createElement('div');
+            checkmark.className = 'checkmark';
+            checkmark.innerHTML = '✓';
+            checkmark.style.position = 'absolute';
+            checkmark.style.top = '50%';
+            checkmark.style.left = '50%';
+            checkmark.style.transform = 'translate(-50%, -50%)';
+            checkmark.style.color = 'white';
+            checkmark.style.fontSize = '32px';
+            checkmark.style.fontWeight = 'bold';
+            checkmark.style.opacity = '0';
+            checkmark.style.transition = 'opacity 0.2s ease';
+            checkmark.style.pointerEvents = 'none';
+            checkmark.style.textShadow = '1px 1px 3px rgba(0, 0, 0, 0.7)';
+            checkmark.style.zIndex = '3';
+            cell.appendChild(checkmark);
+
+            // Add click event to toggle selection
+            cell.addEventListener('click', () => {
+                // Toggle selection
+                if (cell.classList.contains('selected')) {
+                    cell.classList.remove('selected');
+                    // Hide checkmark
+                    checkmark.style.opacity = '0';
+                    // Remove from selected array
+                    const index = selectedCells.indexOf(i);
+                    if (index > -1) {
+                        selectedCells.splice(index, 1);
+                    }
+                } else {
+                    cell.classList.add('selected');
+                    // Show checkmark
+                    checkmark.style.opacity = '1';
+                    // Add to selected array
+                    selectedCells.push(i);
+                }
+
+                // Log selected patches for debugging
+                console.log('Selected patches:', selectedCells);
+            });
+
+            gridContainer.appendChild(cell);
+        }
+
+        container.appendChild(gridContainer);
     }
 
     function setupDartCount(container) {
@@ -762,7 +859,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const puzzleImg = document.createElement('img');
         puzzleImg.id = 'puzzle-image';
         puzzleImg.src = currentPuzzle.image_path;
-        
+
         puzzleImg.style.maxWidth = '100%';
         puzzleImg.style.height = 'auto';
         puzzleImg.style.maxHeight = 'none';
