@@ -399,62 +399,219 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function setupSlidePuzzle(container) {
-        // Simplified slide puzzle setup
+        // Clear the container
+        container.innerHTML = '';
+
+        // Create a container for the background image
         const backgroundContainer = document.createElement('div');
         backgroundContainer.className = 'background-container';
         backgroundContainer.style.position = 'relative';
+        backgroundContainer.style.width = '100%';
+        backgroundContainer.style.height = 'auto';
 
+        // Add background image
         const backgroundImg = document.createElement('img');
         backgroundImg.src = currentPuzzle.background_image;
+        backgroundImg.alt = 'Slide puzzle background';
         backgroundImg.style.width = '100%';
+        backgroundImg.style.height = 'auto';
+        backgroundImg.style.display = 'block';
+        backgroundImg.id = 'slide-background-img'; // Add ID for easy access
         backgroundContainer.appendChild(backgroundImg);
 
+        // Create draggable slider component
         const sliderComponent = document.createElement('div');
         sliderComponent.className = 'slider-component';
         sliderComponent.style.position = 'absolute';
         sliderComponent.style.cursor = 'move';
-        sliderComponent.style.width = '50px';
-        sliderComponent.style.left = '10px';
-        sliderComponent.style.top = '10px';
+        sliderComponent.style.zIndex = '10';
+        sliderComponent.style.userSelect = 'none';
+        sliderComponent.style.touchAction = 'none';
+        // Initial width will be set after images load
 
+        // Add component image
         const componentImg = document.createElement('img');
         componentImg.src = currentPuzzle.component_image;
-        componentImg.style.width = '100%';
-        componentImg.draggable = false;
+        componentImg.alt = 'Slide component';
+        componentImg.style.width = '100%'; // Will be controlled by container size
+        componentImg.style.height = '100%';
+        componentImg.style.display = 'block';
+        componentImg.draggable = false; // Prevent default dragging behavior
         sliderComponent.appendChild(componentImg);
 
+        // Add slider component to the background container
         backgroundContainer.appendChild(sliderComponent);
+
+        // Add the whole setup to the container
         container.appendChild(backgroundContainer);
 
-        // Basic drag functionality
+        // Function to update component size based on background resize ratio
+        const updateComponentSize = () => {
+            if (!backgroundImg.complete || !componentImg.complete || backgroundImg.naturalWidth === 0) return;
+
+            const containerWidth = backgroundImg.width;
+            const containerHeight = backgroundImg.height;
+            const naturalWidth = backgroundImg.naturalWidth;
+            const naturalHeight = backgroundImg.naturalHeight;
+
+            // Calculate scale ratios
+            const scaleX = containerWidth / naturalWidth;
+            const scaleY = containerHeight / naturalHeight;
+
+            // Store scales for submission
+            backgroundImg.dataset.scaleX = scaleX;
+            backgroundImg.dataset.scaleY = scaleY;
+
+            // Calculate component dimensions based on its natural size and the scale
+            const componentWidth = componentImg.naturalWidth * scaleX;
+            const componentHeight = componentImg.naturalHeight * scaleY;
+
+            sliderComponent.style.width = `${componentWidth}px`;
+            sliderComponent.style.height = `${componentHeight}px`;
+
+            // Initial position for the slider component - bottom right corner
+            // Only set if not already set (to avoid resetting on window resize if we added that)
+            if (!sliderComponent.style.left) {
+                const initialLeft = containerWidth - componentWidth - 20;
+                const initialTop = containerHeight - componentHeight - 20;
+
+                sliderComponent.style.left = `${initialLeft}px`;
+                sliderComponent.style.top = `${initialTop}px`;
+            }
+        };
+
+        // Wait for images to load
+        backgroundImg.onload = updateComponentSize;
+        componentImg.onload = updateComponentSize;
+
+        // Trigger onload if images are already cached/loaded
+        if (backgroundImg.complete) updateComponentSize();
+        if (componentImg.complete) updateComponentSize();
+
+        // Set up draggable functionality
         let isDragging = false;
         let startX, startY, startLeft, startTop;
 
+        // Mouse events for desktop
         sliderComponent.addEventListener('mousedown', (e) => {
             isDragging = true;
             startX = e.clientX;
             startY = e.clientY;
             startLeft = parseInt(sliderComponent.style.left) || 0;
             startTop = parseInt(sliderComponent.style.top) || 0;
+            sliderComponent.style.opacity = '0.8';
+
+            // Prevent default browser behavior
+            e.preventDefault();
         });
 
         document.addEventListener('mousemove', (e) => {
             if (!isDragging) return;
+
+            // Calculate new position
             const deltaX = e.clientX - startX;
             const deltaY = e.clientY - startY;
-            sliderComponent.style.left = `${startLeft + deltaX}px`;
-            sliderComponent.style.top = `${startTop + deltaY}px`;
+
+            // Calculate new position
+            let newLeft = startLeft + deltaX;
+            let newTop = startTop + deltaY;
+
+            // Get container dimensions
+            const containerRect = backgroundContainer.getBoundingClientRect();
+            const sliderRect = sliderComponent.getBoundingClientRect();
+
+            // Ensure the slider stays within the container bounds
+            if (newLeft < 0) newLeft = 0;
+            if (newTop < 0) newTop = 0;
+            if (newLeft > containerRect.width - sliderRect.width)
+                newLeft = containerRect.width - sliderRect.width;
+            if (newTop > containerRect.height - sliderRect.height)
+                newTop = containerRect.height - sliderRect.height;
+
+            sliderComponent.style.left = `${newLeft}px`;
+            sliderComponent.style.top = `${newTop}px`;
         });
 
         document.addEventListener('mouseup', () => {
-            isDragging = false;
+            if (isDragging) {
+                isDragging = false;
+                sliderComponent.style.opacity = '1';
+            }
+        });
+
+        // Touch events for mobile
+        sliderComponent.addEventListener('touchstart', (e) => {
+            isDragging = true;
+            startX = e.touches[0].clientX;
+            startY = e.touches[0].clientY;
+            startLeft = parseInt(sliderComponent.style.left) || 0;
+            startTop = parseInt(sliderComponent.style.top) || 0;
+            sliderComponent.style.opacity = '0.8';
+
+            // Prevent default browser behavior
+            e.preventDefault();
+        });
+
+        document.addEventListener('touchmove', (e) => {
+            if (!isDragging) return;
+
+            // Calculate new position
+            const deltaX = e.touches[0].clientX - startX;
+            const deltaY = e.touches[0].clientY - startY;
+
+            // Calculate new position
+            let newLeft = startLeft + deltaX;
+            let newTop = startTop + deltaY;
+
+            // Get container dimensions
+            const containerRect = backgroundContainer.getBoundingClientRect();
+            const sliderRect = sliderComponent.getBoundingClientRect();
+
+            // Ensure the slider stays within the container bounds
+            if (newLeft < 0) newLeft = 0;
+            if (newTop < 0) newTop = 0;
+            if (newLeft > containerRect.width - sliderRect.width)
+                newLeft = containerRect.width - sliderRect.width;
+            if (newTop > containerRect.height - sliderRect.height)
+                newTop = containerRect.height - sliderRect.height;
+
+            sliderComponent.style.left = `${newLeft}px`;
+            sliderComponent.style.top = `${newTop}px`;
+        });
+
+        document.addEventListener('touchend', () => {
+            if (isDragging) {
+                isDragging = false;
+                sliderComponent.style.opacity = '1';
+            }
         });
     }
 
     function getSliderPosition() {
         const slider = document.querySelector('.slider-component');
-        if (slider) {
-            return [parseInt(slider.style.left) || 0, parseInt(slider.style.top) || 0];
+        const backgroundImg = document.getElementById('slide-background-img');
+
+        if (slider && backgroundImg) {
+            const left = parseInt(slider.style.left) || 0;
+            const top = parseInt(slider.style.top) || 0;
+
+            // Calculate center point in displayed coordinates
+            const width = slider.offsetWidth;
+            const height = slider.offsetHeight;
+
+            const centerX = left + (width / 2);
+            const centerY = top + (height / 2);
+
+            // Normalize to 500px width (which ground truth is based on)
+            // If the container is smaller (e.g. mobile), we scale up.
+            // If the container is 500px, scale is 1.
+            const containerWidth = backgroundImg.width;
+            const normalizationScale = 500 / containerWidth;
+
+            const normalizedX = centerX * normalizationScale;
+            const normalizedY = centerY * normalizationScale;
+
+            return [Math.round(normalizedX), Math.round(normalizedY)];
         }
         return [0, 0];
     }
