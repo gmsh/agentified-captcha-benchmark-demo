@@ -266,6 +266,34 @@ async def api_list_puzzles(request):
     })
 
 
+async def api_get_ground_truth_json(request):
+    puzzle_type = request.query_params.get('type')
+    puzzle_id = request.query_params.get('id')
+    if not puzzle_type or not puzzle_id:
+        return JSONResponse({'error': 'type and id parameters are required'}, status_code=400)
+    
+    ground_truth = load_ground_truth(puzzle_type)
+    if puzzle_id not in ground_truth:
+        return JSONResponse({'error': 'Puzzle not found'}, status_code=404)
+
+    return JSONResponse(ground_truth[puzzle_id])
+
+async def api_get_user_output_json(request):
+    puzzle_type = request.query_params.get('type')
+    puzzle_id = request.query_params.get('id')
+    if not puzzle_type or not puzzle_id:
+        return JSONResponse({'error': 'type and id parameters are required'}, status_code=400)
+
+    output_dir = Path(__file__).parent / 'output' / puzzle_type
+    file_path = output_dir / f"{puzzle_id}.json"
+
+    if not file_path.exists():
+        return JSONResponse({'error': 'User output not found'}, status_code=404)
+
+    with open(file_path, 'r') as f:
+        return JSONResponse(json.load(f))
+
+
 async def serve_puzzle_page(request):
     """Serve the interactive puzzle page."""
     templates = Jinja2Templates(directory=str(TEMPLATES_DIR))
@@ -947,6 +975,8 @@ async def main():
         app.add_route('/api/save_puzzle_data', api_save_puzzle_data, methods=['POST'])
         app.add_route('/api/types', api_get_types)
         app.add_route('/api/list_puzzles', api_list_puzzles)
+        app.add_route('/api/get_ground_truth_json', api_get_ground_truth_json)
+        app.add_route('/api/get_user_output_json', api_get_user_output_json)
         app.add_route('/captcha_data/{captcha_type}/{filename:path}', serve_captcha_file)
         
         # Mount static files

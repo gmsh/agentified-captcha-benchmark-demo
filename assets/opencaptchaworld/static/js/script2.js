@@ -45,7 +45,7 @@ document.addEventListener('DOMContentLoaded', () => {
         userAnswerInput.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') {
                 if(isTestMode) {
-                    printAndNextPuzzle();
+                    // In test mode, enter does nothing now to avoid confusion
                 } else {
                     downloadResult();
                 }
@@ -76,102 +76,136 @@ document.addEventListener('DOMContentLoaded', () => {
         puzzleContainer.style.display = 'block';
     }
 
-    function printAndNextPuzzle() {
-    if (!currentPuzzle) {
-        alert('No puzzle loaded');
-        return;
+    function getAnswerFromInput() {
+        if (!currentPuzzle) {
+            return { error: 'No puzzle loaded' };
+        }
+
+        let answer = null;
+        const userAnswerInput = document.getElementById('user-answer');
+
+        switch (currentPuzzle.input_type) {
+            case 'number':
+            case 'text':
+                if (!userAnswerInput) return { error: 'Answer input not found' };
+                answer = userAnswerInput.value.trim();
+                if (!answer) return { error: 'Please provide an answer' };
+                if (currentPuzzle.input_type === 'number') {
+                    const parsedAnswer = parseInt(answer, 10);
+                    if (isNaN(parsedAnswer)) {
+                        answer = answer; // Keep as string if not a valid number
+                    } else {
+                        answer = parsedAnswer;
+                    }
+                }
+                break;
+            case 'click':
+            case 'place_dot':
+                if (!clickCoordinates) return { error: 'Please click on the image first' };
+                answer = clickCoordinates;
+                break;
+            case 'rotation':
+                answer = currentRotationAngle;
+                break;
+            case 'slide':
+                answer = getSliderPosition();
+                break;
+            case 'multiselect':
+            case 'patch_select':
+            case 'select_animal':
+                answer = selectedCells;
+                break;
+            case 'image_grid':
+                answer = getSelectedImages();
+                break;
+            case 'bingo_swap':
+                answer = bingoSelectedCells;
+                break;
+            case 'image_matching':
+            case 'dart_count':
+            case 'object_match':
+            case 'connect_icon':
+                answer = getCurrentOptionIndex();
+                break;
+            case 'click_order':
+                answer = getClickOrderPositions();
+                break;
+            case 'hold_button':
+                answer = getHoldButtonTime();
+                break;
+            default:
+                return { error: 'Unknown input type: ' + currentPuzzle.input_type };
+        }
+        return { answer };
     }
 
-    let answer = null;
+    function printAndDisplayJson() {
+        const { answer, error } = getAnswerFromInput();
+        if (error) {
+            alert(error);
+            return;
+        }
 
-    // Get answer based on input type
-    const userAnswerInput = document.getElementById('user-answer');
-    if (currentPuzzle.input_type === 'number' || currentPuzzle.input_type === 'text') {
-        if (!userAnswerInput) {
-            alert('Answer input not found');
-            return;
-        }
-        answer = userAnswerInput.value.trim();
-        if (!answer) {
-            alert('Please provide an answer');
-            return;
-        }
-        if (currentPuzzle.input_type === 'number') {
-            answer = parseInt(answer, 10);
-            if (isNaN(answer)) {
-                answer = userAnswerInput.value.trim(); // Keep as string if not a valid number
+        const result = {
+            puzzle_type: currentPuzzle.puzzle_type,
+            puzzle_id: currentPuzzle.puzzle_id,
+            answer: answer,
+            elapsed_time: (Date.now() - puzzleStartTime) / 1000,
+            timestamp: new Date().toISOString()
+        };
+
+        // 1. Save the data
+        fetch('/api/save_puzzle_data', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(result),
+        })
+        .then(response => {
+            if (!response.ok) throw new Error('Failed to save puzzle data');
+            return response.json();
+        })
+        .then(data => {
+            if (!data.success) throw new Error(data.message || 'Unknown error saving data');
+            
+            console.log('Puzzle data saved successfully.');
+
+            // 2. Fetch and display JSONs
+            const type = currentPuzzle.puzzle_type;
+            const id = currentPuzzle.puzzle_id;
+
+            const groundTruthPromise = fetch(`/api/get_ground_truth_json?type=${type}&id=${id}`)
+                .then(res => res.json());
+            
+            const userOutputPromise = fetch(`/api/get_user_output_json?type=${type}&id=${id}`)
+                .then(res => res.json());
+
+            return Promise.all([groundTruthPromise, userOutputPromise]);
+        })
+        .then(([groundTruthJson, userOutputJson]) => {
+            const groundTruthJsonEl = document.getElementById('ground-truth-json');
+            const userOutputJsonEl = document.getElementById('user-output-json');
+            if (groundTruthJsonEl) {
+                groundTruthJsonEl.textContent = JSON.stringify(groundTruthJson, null, 2);
             }
-        }
-    } else if (currentPuzzle.input_type === 'click' || currentPuzzle.input_type === 'place_dot') {
-        if (!clickCoordinates) {
-            alert('Please click on the image first');
-            return;
-        }
-        answer = clickCoordinates;
-    } else if (currentPuzzle.input_type === 'rotation') {
-        answer = currentRotationAngle;
-    } else if (currentPuzzle.input_type === 'slide') {
-        answer = getSliderPosition();
-    } else if (currentPuzzle.input_type === 'multiselect' || currentPuzzle.input_type === 'patch_select' || currentPuzzle.input_type === 'select_animal') {
-        answer = selectedCells;
-    } else if (currentPuzzle.input_type === 'image_grid') {
-        answer = getSelectedImages();
-    } else if (currentPuzzle.input_type === 'bingo_swap') {
-        answer = bingoSelectedCells;
-    } else if (currentPuzzle.input_type === 'image_matching' || currentPuzzle.input_type === 'dart_count' || currentPuzzle.input_type === 'object_match' || currentPuzzle.input_type === 'connect_icon') {
-        answer = getCurrentOptionIndex();
-    } else if (currentPuzzle.input_type === 'click_order') {
-        answer = getClickOrderPositions();
-    } else if (currentPuzzle.input_type === 'hold_button') {
-        answer = getHoldButtonTime();
-    } else {
-        alert('Unknown input type: ' + currentPuzzle.input_type);
-        return;
+            if (userOutputJsonEl) {
+                userOutputJsonEl.textContent = JSON.stringify(userOutputJson, null, 2);
+            }
+        })
+        .catch(error => {
+            console.error('Error in print process:', error);
+            alert('An error occurred: ' + error.message);
+        });
     }
 
-    // Create result object right before sending
-    const result = {
-        puzzle_type: currentPuzzle.puzzle_type,
-        puzzle_id: currentPuzzle.puzzle_id,
-        answer: answer,
-        elapsed_time: (Date.now() - puzzleStartTime) / 1000,
-        timestamp: new Date().toISOString()
-    };
-
-    fetch('/api/save_puzzle_data', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(result),
-    })
-    .then(response => {
-        if (!response.ok) {
-            return response.json().then(err => {
-                throw new Error(err.error || 'Server error');
-            });
-        }
-        return response.json();
-    })
-    .then(data => {
-        if (data.success) {
-            console.log('Puzzle data saved:', data.message);
-            currentPuzzleIndex++;
-            if (currentPuzzleIndex < puzzleQueue.length) {
-                const nextPuzzle = puzzleQueue[currentPuzzleIndex];
-                loadPuzzle(nextPuzzle.type, nextPuzzle.id);
-            } else {
-                showError('All puzzles completed!');
-            }
+    function loadNextPuzzle() {
+        currentPuzzleIndex++;
+        if (currentPuzzleIndex < puzzleQueue.length) {
+            const nextPuzzle = puzzleQueue[currentPuzzleIndex];
+            loadPuzzle(nextPuzzle.type, nextPuzzle.id);
         } else {
-            alert('Error saving puzzle data: ' + (data.error || 'Unknown error'));
+            showError('All puzzles completed!');
         }
-    })
-    .catch(error => {
-        console.error('Error saving puzzle data:', error);
-        alert('Error saving puzzle data: ' + error.message);
-    });
-}
+    }
 
     function loadPuzzle(puzzleType, puzzleId) {
         // Reset state
@@ -215,8 +249,24 @@ document.addEventListener('DOMContentLoaded', () => {
         // Re-attach event listeners
         if (newDownloadBtn) {
             if(isTestMode) {
-                newDownloadBtn.textContent = 'Print & Next';
-                newDownloadBtn.addEventListener('click', printAndNextPuzzle);
+                newDownloadBtn.remove(); // Remove the original button
+                
+                const printBtn = document.createElement('button');
+                printBtn.id = 'print-btn';
+                printBtn.textContent = 'Print';
+                printBtn.addEventListener('click', printAndDisplayJson);
+
+                const nextBtn = document.createElement('button');
+                nextBtn.id = 'next-btn';
+                nextBtn.textContent = 'Next';
+                nextBtn.addEventListener('click', loadNextPuzzle);
+
+                const buttonWrapper = document.createElement('div');
+                buttonWrapper.className = 'test-mode-buttons';
+                buttonWrapper.appendChild(printBtn);
+                buttonWrapper.appendChild(nextBtn);
+                
+                newInputGroup.appendChild(buttonWrapper);
             } else {
                 newDownloadBtn.addEventListener('click', () => downloadResult(puzzleType, puzzleId));
             }

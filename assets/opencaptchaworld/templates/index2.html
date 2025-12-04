@@ -47,6 +47,23 @@
             color: #c62828;
             margin: 20px 0;
         }
+        .json-container {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            margin-top: 20px;
+        }
+        .json-box {
+            width: 48%;
+            background-color: #f5f5f5;
+            border: 1px solid #ddd;
+            padding: 10px;
+            border-radius: 4px;
+            overflow-x: auto;
+        }
+        .json-box h4 {
+            margin-top: 0;
+        }
     </style>
 </head>
 <body>
@@ -63,10 +80,21 @@
                 <h3 id="puzzle-prompt">Loading puzzle...</h3>
                 <div class="input-group">
                     <input type="text" id="user-answer" placeholder="Your answer">
-                    <button id="download-result">Download Result</button>
+                    <button id="download-result">Print and Next</button>
                 </div>
                 <button id="reset-clicks">Reset Clicks</button>
                 <div id="result-message" class="result-message"></div>
+            </div>
+        </div>
+
+        <div class="json-container">
+            <div class="json-box">
+                <h4>Ground Truth</h4>
+                <pre id="ground-truth-json"></pre>
+            </div>
+            <div class="json-box">
+                <h4>User Output</h4>
+                <pre id="user-output-json"></pre>
             </div>
         </div>
     </div>
