@@ -254,6 +254,14 @@ def check_answer(puzzle_type: str, puzzle_id: str, user_answer, ground_truth_dat
         correct_answer = ground_truth_data.get('answer')
         try:
             user_x, user_y = user_answer
+            if isinstance(correct_answer, dict) and 'areas' in correct_answer:
+                for area in correct_answer['areas']:
+                    top_left, bottom_right = area
+                    min_x, min_y = top_left
+                    max_x, max_y = bottom_right
+                    if (min_x <= user_x <= max_x) and (min_y <= user_y <= max_y):
+                        return True, correct_answer
+                return False, correct_answer
             if isinstance(correct_answer, dict) and 'area' in correct_answer:
                 top_left, bottom_right = correct_answer['area']
                 min_x, min_y = top_left
