@@ -122,6 +122,7 @@
   "bingo11.png": {
     "answer": [
       [3, 4],
+      [6, 8],
       [7, 8]
     ],
     "prompt": "Please click two images to exchange their position to line up the same images to a line, you can only exchange the images once.",

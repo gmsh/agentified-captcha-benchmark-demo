@@ -5,6 +5,8 @@ let currentRotationAngle = 0;
 let selectedCells = [];
 let bingoSelectedCells = [];
 let selectedAnimalIndex = -1;
+let clickOrderMarkers = [];
+window.clickOrderPositions = [];
 
 document.addEventListener('DOMContentLoaded', () => {
     // DOM elements
@@ -15,6 +17,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const puzzlePrompt = document.getElementById('puzzle-prompt');
     const puzzleContainer = document.getElementById('puzzle-container');
     const inputGroup = document.querySelector('.input-group');
+    const resetClicksBtn = document.getElementById('reset-clicks');
 
     // Get URL parameters
     const urlParams = new URLSearchParams(window.location.search);
@@ -48,6 +51,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             }
         });
+    }
+    if (resetClicksBtn) {
+        resetClicksBtn.addEventListener('click', handleResetClicks);
     }
 
     // Auto-load puzzle
@@ -190,6 +196,7 @@ document.addEventListener('DOMContentLoaded', () => {
         selectedCells = [];
         bingoSelectedCells = [];
         selectedAnimalIndex = -1;
+        resetClickOrderState();
 
         // Show loading state
         puzzleContainer.innerHTML = `
@@ -204,6 +211,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     <input type="text" id="user-answer" placeholder="Your answer">
                     <button id="download-result">Download Result</button>
                 </div>
+                <button id="reset-clicks">Reset Clicks</button>
                 <div id="result-message" class="result-message"></div>
             </div>
         `;
@@ -215,6 +223,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const newDownloadBtn = document.getElementById('download-result');
         const newUserAnswerInput = document.getElementById('user-answer');
         const newResultMessage = document.getElementById('result-message');
+        const newResetButton = document.getElementById('reset-clicks');
         const newPuzzleImageContainer = document.querySelector('.puzzle-image-container');
         const newInputGroup = document.querySelector('.input-group');
 
@@ -237,6 +246,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                 }
             });
+        }
+        if (newResetButton) {
+            newResetButton.addEventListener('click', handleResetClicks);
         }
         if (puzzleImage) {
             puzzleImage.addEventListener('click', (e) => handleImageClick(e, newPuzzleImageContainer));
@@ -275,6 +287,10 @@ document.addEventListener('DOMContentLoaded', () => {
     function renderPuzzle(data, container, inputGroupEl, puzzleImg) {
         // Clear previous puzzle content
         container.innerHTML = '';
+
+        if (data.input_type !== 'click_order') {
+            toggleResetClickButton(false);
+        }
 
         // Remove any existing controls
         const existingControls = document.querySelectorAll('.rotation-controls, .slider-component, .grid-overlay, .arrow-controls, .hold-button-container');
@@ -404,6 +420,77 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             container.appendChild(marker);
         }
+    }
+
+    function handleResetClicks() {
+        if (!currentPuzzle || currentPuzzle.input_type !== 'click_order') {
+            return;
+        }
+        if (!Array.isArray(window.clickOrderPositions) || window.clickOrderPositions.length === 0) {
+            return;
+        }
+
+        resetClickOrderState();
+        updateResetClickButtonState();
+
+        const resultMessage = document.getElementById('result-message');
+        if (resultMessage) {
+            resultMessage.textContent = 'Clicks cleared. Start again.';
+            resultMessage.style.color = '#f44336';
+        }
+    }
+
+    function toggleResetClickButton(shouldShow) {
+        const resetButton = document.getElementById('reset-clicks');
+        if (!resetButton) {
+            return;
+        }
+        if (shouldShow) {
+            resetButton.style.display = 'block';
+            updateResetClickButtonState();
+        } else {
+            resetButton.style.display = 'none';
+            resetButton.disabled = true;
+        }
+    }
+
+    function updateResetClickButtonState() {
+        const resetButton = document.getElementById('reset-clicks');
+        if (!resetButton) {
+            return;
+        }
+        const hasClicks = Array.isArray(window.clickOrderPositions) && window.clickOrderPositions.length > 0;
+        resetButton.disabled = !hasClicks;
+    }
+
+    function resetClickOrderState() {
+        window.clickOrderPositions = [];
+        clearClickOrderMarkers();
+    }
+
+    function clearClickOrderMarkers() {
+        clickOrderMarkers.forEach(marker => {
+            if (marker && marker.parentNode) {
+                marker.parentNode.removeChild(marker);
+            }
+        });
+        clickOrderMarkers = [];
+    }
+
+    function addClickOrderMarker(x, y, container, orderNumber) {
+        if (!container) {
+            return;
+        }
+        if (container.style.position !== 'relative') {
+            container.style.position = 'relative';
+        }
+        const marker = document.createElement('div');
+        marker.className = 'click-order-marker';
+        marker.textContent = orderNumber;
+        marker.style.left = `${x}px`;
+        marker.style.top = `${y}px`;
+        container.appendChild(marker);
+        clickOrderMarkers.push(marker);
     }
 
     function downloadResult(puzzleType, puzzleId) {
@@ -544,62 +631,219 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function setupSlidePuzzle(container) {
-        // Simplified slide puzzle setup
+        // Clear the container
+        container.innerHTML = '';
+
+        // Create a container for the background image
         const backgroundContainer = document.createElement('div');
         backgroundContainer.className = 'background-container';
         backgroundContainer.style.position = 'relative';
+        backgroundContainer.style.width = '100%';
+        backgroundContainer.style.height = 'auto';
 
+        // Add background image
         const backgroundImg = document.createElement('img');
         backgroundImg.src = currentPuzzle.background_image;
+        backgroundImg.alt = 'Slide puzzle background';
         backgroundImg.style.width = '100%';
+        backgroundImg.style.height = 'auto';
+        backgroundImg.style.display = 'block';
+        backgroundImg.id = 'slide-background-img'; // Add ID for easy access
         backgroundContainer.appendChild(backgroundImg);
 
+        // Create draggable slider component
         const sliderComponent = document.createElement('div');
         sliderComponent.className = 'slider-component';
         sliderComponent.style.position = 'absolute';
         sliderComponent.style.cursor = 'move';
-        sliderComponent.style.width = '50px';
-        sliderComponent.style.left = '10px';
-        sliderComponent.style.top = '10px';
+        sliderComponent.style.zIndex = '10';
+        sliderComponent.style.userSelect = 'none';
+        sliderComponent.style.touchAction = 'none';
+        // Initial width will be set after images load
 
+        // Add component image
         const componentImg = document.createElement('img');
         componentImg.src = currentPuzzle.component_image;
-        componentImg.style.width = '100%';
-        componentImg.draggable = false;
+        componentImg.alt = 'Slide component';
+        componentImg.style.width = '100%'; // Will be controlled by container size
+        componentImg.style.height = '100%';
+        componentImg.style.display = 'block';
+        componentImg.draggable = false; // Prevent default dragging behavior
         sliderComponent.appendChild(componentImg);
 
+        // Add slider component to the background container
         backgroundContainer.appendChild(sliderComponent);
+
+        // Add the whole setup to the container
         container.appendChild(backgroundContainer);
 
-        // Basic drag functionality
+        // Function to update component size based on background resize ratio
+        const updateComponentSize = () => {
+            if (!backgroundImg.complete || !componentImg.complete || backgroundImg.naturalWidth === 0) return;
+
+            const containerWidth = backgroundImg.width;
+            const containerHeight = backgroundImg.height;
+            const naturalWidth = backgroundImg.naturalWidth;
+            const naturalHeight = backgroundImg.naturalHeight;
+
+            // Calculate scale ratios
+            const scaleX = containerWidth / naturalWidth;
+            const scaleY = containerHeight / naturalHeight;
+
+            // Store scales for submission
+            backgroundImg.dataset.scaleX = scaleX;
+            backgroundImg.dataset.scaleY = scaleY;
+
+            // Calculate component dimensions based on its natural size and the scale
+            const componentWidth = componentImg.naturalWidth * scaleX;
+            const componentHeight = componentImg.naturalHeight * scaleY;
+
+            sliderComponent.style.width = `${componentWidth}px`;
+            sliderComponent.style.height = `${componentHeight}px`;
+
+            // Initial position for the slider component - bottom right corner
+            // Only set if not already set (to avoid resetting on window resize if we added that)
+            if (!sliderComponent.style.left) {
+                const initialLeft = containerWidth - componentWidth - 20;
+                const initialTop = containerHeight - componentHeight - 20;
+
+                sliderComponent.style.left = `${initialLeft}px`;
+                sliderComponent.style.top = `${initialTop}px`;
+            }
+        };
+
+        // Wait for images to load
+        backgroundImg.onload = updateComponentSize;
+        componentImg.onload = updateComponentSize;
+
+        // Trigger onload if images are already cached/loaded
+        if (backgroundImg.complete) updateComponentSize();
+        if (componentImg.complete) updateComponentSize();
+
+        // Set up draggable functionality
         let isDragging = false;
         let startX, startY, startLeft, startTop;
 
+        // Mouse events for desktop
         sliderComponent.addEventListener('mousedown', (e) => {
             isDragging = true;
             startX = e.clientX;
             startY = e.clientY;
             startLeft = parseInt(sliderComponent.style.left) || 0;
             startTop = parseInt(sliderComponent.style.top) || 0;
+            sliderComponent.style.opacity = '0.8';
+
+            // Prevent default browser behavior
+            e.preventDefault();
         });
 
         document.addEventListener('mousemove', (e) => {
             if (!isDragging) return;
+
+            // Calculate new position
             const deltaX = e.clientX - startX;
             const deltaY = e.clientY - startY;
-            sliderComponent.style.left = `${startLeft + deltaX}px`;
-            sliderComponent.style.top = `${startTop + deltaY}px`;
+
+            // Calculate new position
+            let newLeft = startLeft + deltaX;
+            let newTop = startTop + deltaY;
+
+            // Get container dimensions
+            const containerRect = backgroundContainer.getBoundingClientRect();
+            const sliderRect = sliderComponent.getBoundingClientRect();
+
+            // Ensure the slider stays within the container bounds
+            if (newLeft < 0) newLeft = 0;
+            if (newTop < 0) newTop = 0;
+            if (newLeft > containerRect.width - sliderRect.width)
+                newLeft = containerRect.width - sliderRect.width;
+            if (newTop > containerRect.height - sliderRect.height)
+                newTop = containerRect.height - sliderRect.height;
+
+            sliderComponent.style.left = `${newLeft}px`;
+            sliderComponent.style.top = `${newTop}px`;
         });
 
         document.addEventListener('mouseup', () => {
-            isDragging = false;
+            if (isDragging) {
+                isDragging = false;
+                sliderComponent.style.opacity = '1';
+            }
+        });
+
+        // Touch events for mobile
+        sliderComponent.addEventListener('touchstart', (e) => {
+            isDragging = true;
+            startX = e.touches[0].clientX;
+            startY = e.touches[0].clientY;
+            startLeft = parseInt(sliderComponent.style.left) || 0;
+            startTop = parseInt(sliderComponent.style.top) || 0;
+            sliderComponent.style.opacity = '0.8';
+
+            // Prevent default browser behavior
+            e.preventDefault();
+        });
+
+        document.addEventListener('touchmove', (e) => {
+            if (!isDragging) return;
+
+            // Calculate new position
+            const deltaX = e.touches[0].clientX - startX;
+            const deltaY = e.touches[0].clientY - startY;
+
+            // Calculate new position
+            let newLeft = startLeft + deltaX;
+            let newTop = startTop + deltaY;
+
+            // Get container dimensions
+            const containerRect = backgroundContainer.getBoundingClientRect();
+            const sliderRect = sliderComponent.getBoundingClientRect();
+
+            // Ensure the slider stays within the container bounds
+            if (newLeft < 0) newLeft = 0;
+            if (newTop < 0) newTop = 0;
+            if (newLeft > containerRect.width - sliderRect.width)
+                newLeft = containerRect.width - sliderRect.width;
+            if (newTop > containerRect.height - sliderRect.height)
+                newTop = containerRect.height - sliderRect.height;
+
+            sliderComponent.style.left = `${newLeft}px`;
+            sliderComponent.style.top = `${newTop}px`;
+        });
+
+        document.addEventListener('touchend', () => {
+            if (isDragging) {
+                isDragging = false;
+                sliderComponent.style.opacity = '1';
+            }
         });
     }
 
     function getSliderPosition() {
         const slider = document.querySelector('.slider-component');
-        if (slider) {
-            return [parseInt(slider.style.left) || 0, parseInt(slider.style.top) || 0];
+        const backgroundImg = document.getElementById('slide-background-img');
+
+        if (slider && backgroundImg) {
+            const left = parseInt(slider.style.left) || 0;
+            const top = parseInt(slider.style.top) || 0;
+
+            // Calculate center point in displayed coordinates
+            const width = slider.offsetWidth;
+            const height = slider.offsetHeight;
+
+            const centerX = left + (width / 2);
+            const centerY = top + (height / 2);
+
+            // Normalize to 500px width (which ground truth is based on)
+            // If the container is smaller (e.g. mobile), we scale up.
+            // If the container is 500px, scale is 1.
+            const containerWidth = backgroundImg.width;
+            const normalizationScale = 500 / containerWidth;
+
+            const normalizedX = centerX * normalizationScale;
+            const normalizedY = centerY * normalizationScale;
+
+            return [Math.round(normalizedX), Math.round(normalizedY)];
         }
         return [0, 0];
     }
@@ -805,7 +1049,104 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function setupPatchSelect(container) {
-        setupMultiselect(container); // Similar to multiselect
+        // Clear previous puzzle content
+        container.innerHTML = '';
+
+        // Create a container for the patch select grid
+        const gridContainer = document.createElement('div');
+        gridContainer.className = 'patch-select-grid';
+
+        // Get grid dimensions from the puzzle data
+        const gridSize = currentPuzzle.grid_size || [6, 6];
+        const rows = gridSize[0];
+        const cols = gridSize[1];
+
+        // Set grid styles
+        gridContainer.style.display = 'grid';
+        gridContainer.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
+        gridContainer.style.gridTemplateRows = `repeat(${rows}, 1fr)`;
+        gridContainer.style.gap = '3px';
+        gridContainer.style.width = '100%';
+        gridContainer.style.aspectRatio = `${cols}/${rows}`;
+        gridContainer.style.position = 'relative';
+
+        // Create image container
+        const imageContainer = document.createElement('div');
+        imageContainer.className = 'patch-select-image-container';
+        imageContainer.style.position = 'absolute';
+        imageContainer.style.top = '0';
+        imageContainer.style.left = '0';
+        imageContainer.style.width = '100%';
+        imageContainer.style.height = '100%';
+        imageContainer.style.zIndex = '0';
+
+        // Add the puzzle image
+        const img = document.createElement('img');
+        img.src = currentPuzzle.image_path;
+        img.alt = 'CAPTCHA image';
+        img.style.width = '100%';
+        img.style.height = '100%';
+        img.style.objectFit = 'cover';
+        imageContainer.appendChild(img);
+
+        // Add image container to grid container
+        gridContainer.appendChild(imageContainer);
+
+        // Create grid cells for selection
+        for (let i = 0; i < rows * cols; i++) {
+            const cell = document.createElement('div');
+            cell.className = 'patch-select-cell';
+            cell.dataset.index = i;
+            cell.style.position = 'relative';
+            cell.style.zIndex = '1';
+            cell.style.cursor = 'pointer';
+
+            // Add a checkmark icon to indicate selection
+            const checkmark = document.createElement('div');
+            checkmark.className = 'checkmark';
+            checkmark.innerHTML = '✓';
+            checkmark.style.position = 'absolute';
+            checkmark.style.top = '50%';
+            checkmark.style.left = '50%';
+            checkmark.style.transform = 'translate(-50%, -50%)';
+            checkmark.style.color = 'white';
+            checkmark.style.fontSize = '32px';
+            checkmark.style.fontWeight = 'bold';
+            checkmark.style.opacity = '0';
+            checkmark.style.transition = 'opacity 0.2s ease';
+            checkmark.style.pointerEvents = 'none';
+            checkmark.style.textShadow = '1px 1px 3px rgba(0, 0, 0, 0.7)';
+            checkmark.style.zIndex = '3';
+            cell.appendChild(checkmark);
+
+            // Add click event to toggle selection
+            cell.addEventListener('click', () => {
+                // Toggle selection
+                if (cell.classList.contains('selected')) {
+                    cell.classList.remove('selected');
+                    // Hide checkmark
+                    checkmark.style.opacity = '0';
+                    // Remove from selected array
+                    const index = selectedCells.indexOf(i);
+                    if (index > -1) {
+                        selectedCells.splice(index, 1);
+                    }
+                } else {
+                    cell.classList.add('selected');
+                    // Show checkmark
+                    checkmark.style.opacity = '1';
+                    // Add to selected array
+                    selectedCells.push(i);
+                }
+
+                // Log selected patches for debugging
+                console.log('Selected patches:', selectedCells);
+            });
+
+            gridContainer.appendChild(cell);
+        }
+
+        container.appendChild(gridContainer);
     }
 
     function setupDartCount(container) {
@@ -893,6 +1234,10 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function setupClickOrder(container) {
+        resetClickOrderState();
+        toggleResetClickButton(true);
+        updateResetClickButtonState();
+
         // Show reference image
         const orderImg = document.createElement('img');
         orderImg.src = currentPuzzle.order_image;
@@ -907,7 +1252,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const puzzleImg = document.createElement('img');
         puzzleImg.id = 'puzzle-image';
         puzzleImg.src = currentPuzzle.image_path;
-        
+
         puzzleImg.style.maxWidth = '100%';
         puzzleImg.style.height = 'auto';
         puzzleImg.style.maxHeight = 'none';
@@ -920,14 +1265,21 @@ document.addEventListener('DOMContentLoaded', () => {
         layout.appendChild(puzzleImgWrapper);
         container.appendChild(layout);
 
-        window.clickOrderPositions = [];
+        const resultMessage = document.getElementById('result-message');
 
         puzzleImg.addEventListener('click', (e) => {
             const rect = e.target.getBoundingClientRect();
             const x = Math.round(e.clientX - rect.left);
             const y = Math.round(e.clientY - rect.top);
             window.clickOrderPositions.push([x, y]);
-            showClickMarker(x, y, puzzleImgWrapper);
+            const orderNumber = window.clickOrderPositions.length;
+            addClickOrderMarker(x, y, puzzleImgWrapper, orderNumber);
+            updateResetClickButtonState();
+
+            if (resultMessage) {
+                resultMessage.textContent = `Recorded click #${orderNumber} at (${x}, ${y}).`;
+                resultMessage.style.color = '#2196F3';
+            }
         });
     }
 

@@ -235,20 +235,12 @@ async def serve_captcha_file(request):
     captcha_type = request.path_params['captcha_type']
     filename = request.path_params['filename']
     file_path = _safe_path(captcha_type, filename)
-    
-    if file_path and file_path.exists():
-        return FileResponse(file_path)
-    return JSONResponse({'error': 'File not found'}, status_code=404)
 
-
-async def serve_captcha_subdir_file(request):
-    """Serve CAPTCHA image files from subdirectories."""
-    captcha_type = request.path_params['captcha_type']
-    subdir = request.path_params['subdir']
-    filename = request.path_params['filename']
-    file_path = _safe_path(captcha_type, subdir, filename)
-    
     if file_path and file_path.exists():
+        # Prevent leaking solutions by blocking direct access to ground_truth.json
+        if file_path.name == 'ground_truth.json':
+            logger.warning(f"Blocked access to ground truth file: {file_path}")
+            return JSONResponse({'error': 'File not available'}, status_code=403)
         return FileResponse(file_path)
     return JSONResponse({'error': 'File not found'}, status_code=404)
 
@@ -302,6 +294,14 @@ def check_answer(puzzle_type: str, puzzle_id: str, user_answer, ground_truth_dat
         correct_answer = ground_truth_data.get('answer')
         try:
             user_x, user_y = user_answer
+            if isinstance(correct_answer, dict) and 'areas' in correct_answer:
+                for area in correct_answer['areas']:
+                    top_left, bottom_right = area
+                    min_x, min_y = top_left
+                    max_x, max_y = bottom_right
+                    if (min_x <= user_x <= max_x) and (min_y <= user_y <= max_y):
+                        return True, correct_answer
+                return False, correct_answer
             if isinstance(correct_answer, dict) and 'area' in correct_answer:
                 top_left, bottom_right = correct_answer['area']
                 min_x, min_y = top_left
