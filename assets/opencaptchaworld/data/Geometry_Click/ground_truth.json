@@ -42,7 +42,11 @@
   "geetest_000001.jpg": {
     "answer": {
       "type": "circle",
-      "area": [[160, 90], [210, 125]]
+      "area": [[160, 90], [210, 125]],
+      "areas": [
+        [[160, 90], [210, 125]],
+        [[199, 123], [210, 160]]
+      ]
     },
     "prompt": "Click the yellow cylinder",
     "description": "Geometry click puzzle with various 3D shapes"
