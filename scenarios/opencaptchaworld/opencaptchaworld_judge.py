@@ -7,6 +7,9 @@ import os
 import json
 from pathlib import Path
 from dotenv import load_dotenv
+import tomllib
+import tempfile
+import toml
 
 load_dotenv()
 
@@ -298,6 +301,108 @@ async def serve_puzzle_page(request):
     """Serve the interactive puzzle page."""
     templates = Jinja2Templates(directory=str(TEMPLATES_DIR))
     return templates.TemplateResponse('index2.html', {'request': request})
+
+async def api_test_puzzle(request):
+    try:
+        data = await request.json()
+        puzzle_type = data.get('puzzle_type')
+        puzzle_id = data.get('puzzle_id')
+
+        if not puzzle_type or not puzzle_id:
+            return JSONResponse({'error': 'puzzle_type and puzzle_id are required'}, status_code=400)
+
+        # 1. Find and replace ground truth
+        output_dir = Path(__file__).parent / 'output' / puzzle_type
+        output_file = output_dir / f"{puzzle_id}.json"
+
+        if not output_file.exists():
+            logger.error(f"Output file not found: {output_file}")
+            return JSONResponse({'error': 'not found'}, status_code=404)
+
+        pseudo_purple_dir = Path(__file__).parent / 'pseudo_purple_data' / puzzle_type
+        pseudo_purple_dir.mkdir(parents=True, exist_ok=True)
+        pseudo_purple_file = pseudo_purple_dir / f"{puzzle_id}.json"
+
+        with open(output_file, 'r') as f_in, open(pseudo_purple_file, 'w') as f_out:
+            f_out.write(f_in.read())
+        
+        logger.info(f"Replaced ground truth for {puzzle_id} with output.")
+
+        # 2. Edit scenario.toml
+        scenario_toml_path = Path(__file__).parent / 'scenario.toml'
+        with open(scenario_toml_path, 'rb') as f:
+            toml_data = tomllib.load(f)
+
+        toml_data['config']['puzzle_types'] = [puzzle_type]
+        
+        # Use a different port for the test run
+        test_port = 9011
+        toml_data['green_agent']['endpoint'] = f"http://127.0.0.1:{test_port}"
+        toml_data['green_agent']['cmd'] = f"python scenarios/opencaptchaworld/opencaptchaworld_judge.py --port {test_port}"
+
+        with tempfile.NamedTemporaryFile(mode='w', delete=False, suffix=".toml") as temp_f:
+            toml.dump(toml_data, temp_f)
+            temp_scenario_path = temp_f.name
+
+        logger.info(f"Updated scenario.toml with puzzle_type: {puzzle_type} and port: {test_port}")
+
+        # 3. Run agentbeats-run
+        command = f"uv run agentbeats-run {temp_scenario_path}"
+        
+        process = await asyncio.create_subprocess_shell(
+            command,
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE
+        )
+        stdout, stderr = await process.communicate()
+
+        os.remove(temp_scenario_path)
+
+        log_message = f"agentbeats-run output:\nSTDOUT:\n{stdout.decode()}\nSTDERR:\n{stderr.decode()}"
+        logger.info(log_message)
+
+        return JSONResponse({'success': True, 'message': 'Test process completed.', 'output': log_message})
+
+    except Exception as e:
+        logger.error(f"Error in test_puzzle: {e}", exc_info=True)
+        return JSONResponse({'error': 'Failed to run test process'}, status_code=500)
+
+async def api_reset_puzzles(request):
+    try:
+        # 4. Run extract_ground_truth.py
+        extractor_script_path = Path(__file__).parent / 'extract_ground_truth.py'
+        command = f"python {extractor_script_path}"
+
+        process = await asyncio.create_subprocess_shell(
+            command,
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE
+        )
+        stdout, stderr = await process.communicate()
+
+        log_message = f"Extractor script output:\nSTDOUT:\n{stdout.decode()}\nSTDERR:\n{stderr.decode()}"
+        logger.info(log_message)
+
+        # Re-edit scenario.toml
+        scenario_toml_path = Path(__file__).parent / 'scenario.toml'
+        with open(scenario_toml_path, 'r') as f:
+            lines = f.readlines()
+        
+        with open(scenario_toml_path, 'w') as f:
+            for line in lines:
+                if line.strip().startswith('puzzle_types'):
+                    f.write('puzzle_types = []\n')
+                else:
+                    f.write(line)
+        
+        logger.info("Reset scenario.toml to test all puzzle types.")
+
+        return JSONResponse({'success': True, 'message': 'Reset process completed.', 'output': log_message})
+
+    except Exception as e:
+        logger.error(f"Error in reset_puzzles: {e}", exc_info=True)
+        return JSONResponse({'error': 'Failed to run reset process'}, status_code=500)
+
 
 
 def check_answer(puzzle_type: str, puzzle_id: str, user_answer, ground_truth_data: dict) -> tuple[bool, any]:
@@ -978,6 +1083,9 @@ async def main():
         app.add_route('/api/get_ground_truth_json', api_get_ground_truth_json)
         app.add_route('/api/get_user_output_json', api_get_user_output_json)
         app.add_route('/captcha_data/{captcha_type}/{filename:path}', serve_captcha_file)
+        app.add_route('/api/test_puzzle', api_test_puzzle, methods=['POST'])
+        app.add_route('/api/reset_puzzles', api_reset_puzzles, methods=['POST'])
+        
         
         # Mount static files
         app.mount('/static', StaticFiles(directory=str(STATIC_DIR)), name='static')

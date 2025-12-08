@@ -21,9 +21,18 @@ This command will:
 In the browser, you will see the puzzle interface.
 
 1.  **Solve the Puzzle**: Interact with the interface to solve the CAPTCHA.
-2.  **Buttons**: Instead of the usual "Download Result" button, you will see two buttons: **Print** and **Next**.
+2.  **Buttons**: Instead of the usual "Download Result" button, you will see four buttons: **Print**, **Next**, **Test**, and **Reset**.
 3.  **Print**: Clicking this button saves your answer to a JSON file in the `scenarios/opencaptchaworld/output/<Puzzle_Type>/` directory and displays the ground truth and your output JSONs at the bottom of the page.
 4.  **Next**: Clicking this button loads the next puzzle from the list you provided in the command.
+5.  **Test**: Clicking this button will:
+    *   Replace the ground truth file in `scenarios/opencaptchaworld/pseudo_purple_data` with your last saved output.
+    *   Update `scenarios/opencaptchaworld/scenario.toml` to only test the current puzzle type.
+    *   Run the `opencaptchaworld_solver.py` in `ground_truth` mode.
+    *   The output of the script will be logged to the server console.
+6.  **Reset**: Clicking this button will:
+    *   Run the `extract_ground_truth.py` script to restore the original ground truth data.
+    *   Reset `scenarios/opencaptchaworld/scenario.toml` to test all puzzle types.
+    *   The output of the script will be logged to the server console.
 
 This process continues until all puzzles in the list have been solved.
 

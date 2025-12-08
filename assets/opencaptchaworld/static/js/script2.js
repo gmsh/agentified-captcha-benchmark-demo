@@ -261,10 +261,22 @@ document.addEventListener('DOMContentLoaded', () => {
                 nextBtn.textContent = 'Next';
                 nextBtn.addEventListener('click', loadNextPuzzle);
 
+                const testBtn = document.createElement('button');
+                testBtn.id = 'test-btn';
+                testBtn.textContent = 'Test';
+                testBtn.addEventListener('click', testPuzzle);
+
+                const resetBtn = document.createElement('button');
+                resetBtn.id = 'reset-btn';
+                resetBtn.textContent = 'Reset';
+                resetBtn.addEventListener('click', resetPuzzles);
+
                 const buttonWrapper = document.createElement('div');
                 buttonWrapper.className = 'test-mode-buttons';
                 buttonWrapper.appendChild(printBtn);
                 buttonWrapper.appendChild(nextBtn);
+                buttonWrapper.appendChild(testBtn);
+                buttonWrapper.appendChild(resetBtn);
                 
                 newInputGroup.appendChild(buttonWrapper);
             } else {
@@ -1461,5 +1473,53 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function getHoldButtonTime() {
         return window.holdButtonTime ? window.holdButtonTime() : 0;
+    }
+
+    function testPuzzle() {
+        if (!currentPuzzle) {
+            alert('No puzzle loaded');
+            return;
+        }
+
+        const puzzleData = {
+            puzzle_type: currentPuzzle.puzzle_type,
+            puzzle_id: currentPuzzle.puzzle_id,
+        };
+
+        fetch('/api/test_puzzle', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(puzzleData),
+        })
+        .then(response => response.json())
+        .then(data => {
+            console.log('Test puzzle response:', data);
+            const testOutputEl = document.getElementById('test-output-json');
+            if (testOutputEl) {
+                testOutputEl.textContent = data.output;
+            }
+            alert(data.message || data.error);
+        })
+        .catch(error => {
+            console.error('Error testing puzzle:', error);
+            alert('Error testing puzzle: ' + error.message);
+        });
+    }
+
+    function resetPuzzles() {
+        fetch('/api/reset_puzzles', {
+            method: 'POST',
+        })
+        .then(response => response.json())
+        .then(data => {
+            console.log('Reset puzzles response:', data);
+            alert(data.message || data.error);
+        })
+        .catch(error => {
+            console.error('Error resetting puzzles:', error);
+            alert('Error resetting puzzles: ' + error.message);
+        });
     }
 });
