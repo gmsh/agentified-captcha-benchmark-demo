@@ -63,7 +63,9 @@
   "bingo6.png": {
     "answer": [
       [3, 6],
-      [2, 5]
+      [2, 5],
+      [8, 0],
+      [1, 5]
     ],
     "prompt": "Please click two images to exchange their position to line up the same images to a line, you can only exchange the images once.",
     "description": "Bingo puzzle with animal emojis",
@@ -75,7 +77,10 @@
   },
   "bingo7.png": {
     "answer": [
-      [4, 7]
+      [4, 7],
+      [2, 4],
+      [8, 2],
+      [6, 0]
     ],
     "prompt": "Please click two images to exchange their position to line up the same images to a line, you can only exchange the images once.",
     "description": "Bingo puzzle with animal emojis",
@@ -87,7 +92,12 @@
   "bingo8.png": {
     "answer": [
       [4, 7],
-      [1, 4]
+      [1, 4],
+      [6, 0],
+      [0, 8],
+      [6, 5],
+      [5, 1],
+      [4, 8]
     ],
     "prompt": "Please click two images to exchange their position to line up the same images to a line, you can only exchange the images once.",
     "description": "Bingo puzzle with animal emojis",
@@ -99,7 +109,8 @@
   },
   "bingo9.png": {
     "answer": [
-      [1, 4]
+      [1, 4],
+      [7, 1]
     ],
     "prompt": "Please click two images to exchange their position to line up the same images to a line, you can only exchange the images once.",
     "description": "Bingo puzzle with animal emojis",
@@ -110,7 +121,9 @@
   },
   "bingo10.png": {
     "answer": [
-      [2, 5]
+      [2, 5],
+      [6, 2],
+      [5, 3]
     ],
     "prompt": "Please click two images to exchange their position to line up the same images to a line, you can only exchange the images once.",
     "description": "Bingo puzzle with animal emojis",
@@ -135,7 +148,8 @@
   },
   "bingo12.png": {
     "answer": [
-      [1, 4]
+      [1, 4],
+      [1, 7]
     ],
     "prompt": "Please click two images to exchange their position to line up the same images to a line, you can only exchange the images once.",
     "description": "Bingo puzzle with animal emojis",
@@ -146,7 +160,10 @@
   },
   "bingo13.png": {
     "answer": [
-      [5, 8]
+      [5, 8],
+      [4, 2],
+      [0, 7],
+      [1, 8]
     ],
     "prompt": "Please click two images to exchange their position to line up the same images to a line, you can only exchange the images once.",
     "description": "Bingo puzzle with animal emojis",
@@ -157,7 +174,8 @@
   },
   "bingo14.png": {
     "answer": [
-      [0, 3]
+      [0, 3],
+      [0, 2]
     ],
     "prompt": "Please click two images to exchange their position to line up the same images to a line, you can only exchange the images once.",
     "description": "Bingo puzzle with animal emojis",
@@ -204,7 +222,8 @@
   "bingo18.png": {
     "answer": [
       [1, 4],
-      [2, 8]
+      [2, 8],
+      [0, 6]
     ],
     "prompt": "Please click two images to exchange their position to line up the same images to a line, you can only exchange the images once.",
     "description": "Bingo puzzle with animal emojis",
