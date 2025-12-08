@@ -301,7 +301,7 @@ def check_answer(puzzle_type: str, puzzle_id: str, user_answer, ground_truth_dat
     
     elif puzzle_type in ['Unusual_Detection', 'Patch_Select', 'Select_Animal']:
         correct_cells = ground_truth_data.get('correct_patches', ground_truth_data.get('answer', []))
-        optional_cells = ground_truth_data.get('optinal_patches', [])
+        optional_cells = ground_truth_data.get('optional_patches', [])
         try:
             logger.info(f"Checking {puzzle_type}: user_answer={user_answer} (type={type(user_answer)}), correct_cells={correct_cells} (type={type(correct_cells)})")
             if optional_cells:
