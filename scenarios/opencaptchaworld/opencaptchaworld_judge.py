@@ -301,8 +301,13 @@ def check_answer(puzzle_type: str, puzzle_id: str, user_answer, ground_truth_dat
     
     elif puzzle_type in ['Unusual_Detection', 'Patch_Select', 'Select_Animal']:
         correct_cells = ground_truth_data.get('correct_patches', ground_truth_data.get('answer', []))
+        optional_cells = ground_truth_data.get('optinal_patches', [])
         try:
             logger.info(f"Checking {puzzle_type}: user_answer={user_answer} (type={type(user_answer)}), correct_cells={correct_cells} (type={type(correct_cells)})")
+            if optional_cells:
+                # If optional cells exist, remove all optional cells from both user answer and correct cells
+                user_answer = [cell for cell in user_answer if cell not in optional_cells]
+                correct_cells = [cell for cell in correct_cells if cell not in optional_cells]
             is_correct = set(user_answer) == set(correct_cells)
             logger.info(f"Result: {is_correct}")
             return is_correct, correct_cells
