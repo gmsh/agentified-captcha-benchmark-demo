@@ -338,6 +338,11 @@ def check_answer(puzzle_type: str, puzzle_id: str, user_answer, ground_truth_dat
     elif puzzle_type in ['Image_Matching', 'Dart_Count', 'Object_Match', 'Coordinates']:
         correct_index = ground_truth_data.get('correct_option_index')
         try:
+            if 'correct_option_indices' in ground_truth_data:
+                correct_indices = ground_truth_data.get('correct_option_indices', [-1])
+                for idx in correct_indices:
+                    if int(user_answer) == idx:
+                        return True, correct_indices
             user_index = int(user_answer)
             is_correct = user_index == correct_index
             return is_correct, correct_index
