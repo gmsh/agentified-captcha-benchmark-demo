@@ -301,8 +301,13 @@ def check_answer(puzzle_type: str, puzzle_id: str, user_answer, ground_truth_dat
     
     elif puzzle_type in ['Unusual_Detection', 'Patch_Select', 'Select_Animal']:
         correct_cells = ground_truth_data.get('correct_patches', ground_truth_data.get('answer', []))
+        optional_cells = ground_truth_data.get('optional_patches', [])
         try:
             logger.info(f"Checking {puzzle_type}: user_answer={user_answer} (type={type(user_answer)}), correct_cells={correct_cells} (type={type(correct_cells)})")
+            if optional_cells:
+                # If optional cells exist, remove all optional cells from both user answer and correct cells
+                user_answer = [cell for cell in user_answer if cell not in optional_cells]
+                correct_cells = [cell for cell in correct_cells if cell not in optional_cells]
             is_correct = set(user_answer) == set(correct_cells)
             logger.info(f"Result: {is_correct}")
             return is_correct, correct_cells
@@ -333,6 +338,11 @@ def check_answer(puzzle_type: str, puzzle_id: str, user_answer, ground_truth_dat
     elif puzzle_type in ['Image_Matching', 'Dart_Count', 'Object_Match', 'Coordinates']:
         correct_index = ground_truth_data.get('correct_option_index')
         try:
+            if 'correct_option_indices' in ground_truth_data:
+                correct_indices = ground_truth_data.get('correct_option_indices', [-1])
+                for idx in correct_indices:
+                    if int(user_answer) == idx:
+                        return True, correct_indices
             user_index = int(user_answer)
             is_correct = user_index == correct_index
             return is_correct, correct_index
