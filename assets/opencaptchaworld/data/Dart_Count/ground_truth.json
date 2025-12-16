@@ -295,6 +295,7 @@
       "4darts_3.png"
     ],
     "correct_option_index": 6,
+    "correct_option_indices": [6, 9],
     "prompt": "Use the arrows to pick the image where all the darts add up to the number in the left image.",
     "description": "Dart counting puzzle where players need to find the image with darts that add up to the reference number",
     "dart_sums": {

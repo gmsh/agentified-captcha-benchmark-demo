@@ -128,7 +128,7 @@
       "image15.png", 
       "image18.png"
     ],
-    "correct_option_index": 0,
+    "correct_option_index": 1,
     "prompt": "Use the arrows to change the number of objects until it matches the left image."
   },
   "example12.png": {
