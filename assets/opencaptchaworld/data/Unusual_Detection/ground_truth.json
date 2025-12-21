@@ -149,7 +149,7 @@
   "unusual22.png": {
     "prompt": "Select the animal with the wrong head",
     "description": "Grid of animal images where some have mismatched heads/bodies",
-    "answer": [0,3,4],
+    "answer": [2],
     "grid_size": [2,3],
     "tolerance": 5
   },
