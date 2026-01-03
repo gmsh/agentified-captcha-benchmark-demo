@@ -1,0 +1,53 @@
+# Version control
+.git/
+.gitignore
+.gitattributes
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+.venv/
+.uv-cache/
+
+# Environment
+.env
+.env.*
+sample.env
+
+# IDE
+.vscode/
+.idea/
+.claude/
+*.swp
+*.swo
+*~
+
+# Documentation (old versions)
+README.agentbeats.md
+example_output.txt
+
+# Scenarios to exclude
+scenarios/captcha/
+scenarios/debate/
+
+# Assets to exclude
+assets/kaggle-captcha-v2-images/
+assets/sample_output.png
+assets/kaggle-captcha-v2-images.md
+
+# macOS
+.DS_Store
+
+# Temporary
+*.log
+*.tmp
+.pytest_cache/
+.mypy_cache/
+
+# Docker
+Dockerfile
+.dockerignore
