@@ -160,20 +160,6 @@ The included pseudo purple agent supports two modes:
   - `static/`: CSS/JavaScript for puzzle rendering
 - **Source**: [MetaAgentX/OpenCaptchaWorld](https://github.com/MetaAgentX/OpenCaptchaWorld)
 
-### Git LFS Verification
-
-After cloning, verify LFS files downloaded correctly:
-
-```bash
-ls -lh assets/opencaptchaworld/data/Dice_Count/dice1.png
-# Should show ~3MB, not ~130 bytes
-```
-
-If files show small sizes (LFS pointers):
-```bash
-git lfs install
-git lfs pull
-```
 
 ## Configuration
 
