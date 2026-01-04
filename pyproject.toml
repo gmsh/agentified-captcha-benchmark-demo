@@ -21,6 +21,13 @@ dependencies = [
 [project.scripts]
 agentbeats-run = "agentbeats.run_scenario:main"
 
+[project.optional-dependencies]
+test = [
+    "pytest>=8.0.0",
+    "pytest-asyncio>=0.24.0",
+    "httpx>=0.28.1",
+]
+
 [tool.uv]
 package = true
 dev-dependencies = [
