@@ -1,4 +1,4 @@
-# OpenCaptchaWorld Benchmark
+# Agentified OpenCaptchaWorld Benchmark
 
 Agent-based benchmark for interactive CAPTCHA solving using the A2A (Agent-to-Agent) protocol.
 
@@ -41,6 +41,11 @@ uv run agentbeats-run scenarios/opencaptchaworld/scenario.toml
 ```
 
 ### Option 2: Docker Execution (Recommended)
+
+**Pull Pre-built Image (Recommended):**
+```bash
+docker pull ghcr.io/gmsh/agentified-opencaptchaworld:latest
+```
 
 **Run Green Agent (Judge):**
 ```bash
