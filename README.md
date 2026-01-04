@@ -50,15 +50,15 @@ docker pull ghcr.io/gmsh/agentified-opencaptchaworld:latest
 **Run Green Agent (Judge):**
 ```bash
 # Start green agent on port 9010
-docker run -p 9010:9010 ghcr.io/gmsh/agentified-opencaptchaworld:latest
+docker run --network host ghcr.io/gmsh/agentified-opencaptchaworld:latest
 # Green agent listens on http://localhost:9010
 ```
 
 **Run Purple Agent (Solver):**
 ```bash
 # In a separate terminal, start purple agent in fixed mode
-docker run -p 9020:9020 ghcr.io/gmsh/agentified-opencaptchaworld:latest \
-  python scenarios/opencaptchaworld/opencaptchaworld_solver.py \
+docker run --network host --entrypoint uv ghcr.io/gmsh/agentified-opencaptchaworld:latest \
+  run scenarios/opencaptchaworld/opencaptchaworld_solver.py \
   --host 0.0.0.0 --port 9020 --mode fixed
 ```
 
@@ -66,8 +66,8 @@ docker run -p 9020:9020 ghcr.io/gmsh/agentified-opencaptchaworld:latest \
 ```bash
 # Run both agents internally with automated evaluation
 # Note: Uses the scenario.toml configuration baked into the Docker image
-docker run ghcr.io/gmsh/agentified-opencaptchaworld:latest \
-  python -m agentbeats.run_scenario scenarios/opencaptchaworld/scenario.toml
+docker run --network host --entrypoint uv ghcr.io/gmsh/agentified-opencaptchaworld:latest \
+  run python -m agentbeats.run_scenario scenarios/opencaptchaworld/scenario.toml
 ```
 
 **Expected Output (when running purple agent in Fixed Mode):**
