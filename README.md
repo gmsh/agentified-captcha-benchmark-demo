@@ -8,7 +8,7 @@ This benchmark evaluates AI agents' ability to solve interactive visual CAPTCHA 
 
 The benchmark implements:
 - **Green Agent (Judge)**: Embedded puzzle server with evaluation logic (port 9010)
-- **Purple Agent (Solver)**: Baseline solver demonstrating evaluation framework
+- **Purple Agent (Solver)**: Baseline solver with two modes - *fixed mode* (naive baseline without vision/browser tools, ~13% accuracy) and *ground_truth mode* (verifies judge's evaluation logic, 100% accuracy)
 
 ## Prerequisites
 
@@ -16,7 +16,7 @@ The benchmark implements:
 - **Git LFS** (critical - 809MB puzzle data stored via LFS)
 - **Docker** (for containerized deployment)
 
-**Note:** No API keys required - the baseline solver runs in ground_truth mode using pre-loaded answers.
+**Note:** No API keys required - the baseline solver runs in fixed mode (naive baseline) by default. Ground truth mode is available to verify the correctness of the judge's answer evaluation logic.
 
 ## Quick Start
 
@@ -27,8 +27,8 @@ The benchmark implements:
 git lfs install
 
 # Clone repository
-git clone https://github.com/gmsh/agentified-captcha-benchmark-demo.git
-cd agentified-captcha-benchmark-demo
+git clone https://github.com/gmsh/agentified-opencaptchaworld.git
+cd agentified-opencaptchaworld
 
 # Pull LFS assets (809MB)
 git lfs pull
@@ -42,37 +42,35 @@ uv run agentbeats-run scenarios/opencaptchaworld/scenario.toml
 
 ### Option 2: Docker Execution (Recommended)
 
-**Pull Pre-built Image (Recommended):**
 ```bash
+# Pull pre-built image
 docker pull ghcr.io/gmsh/agentified-opencaptchaworld:latest
 ```
 
 **Run Green Agent (Judge):**
 ```bash
-# Build Docker image
-docker build -t agentified-opencaptchaworld .
-
-# Start green agent
-docker run -p 9010:9010 agentified-opencaptchaworld
+# Start green agent on port 9010
+docker run -p 9010:9010 ghcr.io/gmsh/agentified-opencaptchaworld:latest
 # Green agent listens on http://localhost:9010
 ```
 
 **Run Purple Agent (Solver):**
 ```bash
-# In a separate terminal, start purple agent
-docker run -p 9020:9020 agentified-opencaptchaworld \
+# In a separate terminal, start purple agent in fixed mode
+docker run -p 9020:9020 ghcr.io/gmsh/agentified-opencaptchaworld:latest \
   python scenarios/opencaptchaworld/opencaptchaworld_solver.py \
-  --host 0.0.0.0 --port 9020 --mode ground_truth
+  --host 0.0.0.0 --port 9020 --mode fixed
 ```
 
 **Or Run Complete Scenario (Orchestrated):**
 ```bash
 # Run both agents internally with automated evaluation
-docker run agentified-opencaptchaworld \
+# Note: Uses the scenario.toml configuration baked into the Docker image
+docker run ghcr.io/gmsh/agentified-opencaptchaworld:latest \
   python -m agentbeats.run_scenario scenarios/opencaptchaworld/scenario.toml
 ```
 
-**Expected Output:**
+**Expected Output (when running purple agent in Fixed Mode):**
 ```
 Starting opencaptcha_solver at 127.0.0.1:9020
 Starting green agent at 127.0.0.1:9010
@@ -80,11 +78,14 @@ Waiting for 2 agent(s) to be ready...
   2/2 agents ready, waiting...
 
 === OpenCaptchaWorld Evaluation Results ===
-Dice_Count: 100.0% (20/20)
-Geometry_Click: 100.0% (20/20)
-Rotation_Match: 100.0% (18/18)
+Unusual_Detection: 6.7% (2/30)
+Connect_icon: 20.0% (4/20)
+Select_Animal: 16.7% (5/30)
+Dice_Count: 5.0% (1/20)
+Geometry_Click: 10.0% (2/20)
+Rotation_Match: 12.5% (6/48)
 [... all 20 puzzle types ...]
-Overall Accuracy: 100.00% (463/463)
+Overall Accuracy: 13.39% (62/463)
 ```
 
 ## Benchmark Details
@@ -97,29 +98,29 @@ The benchmark includes 20 interactive puzzle types testing different cognitive c
 - **Dice_Count**: Sum numbers shown on dice (20 puzzles)
 - **Geometry_Click**: Click on specific geometric shapes (20 puzzles)
 - **Image_Recognition**: Select images matching a description (20 puzzles)
-- **Unusual_Detection**: Identify unusual items in a grid (20 puzzles)
+- **Unusual_Detection**: Identify unusual items in a grid (30 puzzles)
 
 **Spatial Reasoning:**
-- **Rotation_Match**: Rotate object to match reference orientation (18 puzzles)
-- **Slide_Puzzle**: Drag component to target position (20 puzzles)
-- **Coordinates**: Move object to specified coordinates (20 puzzles)
-- **Path_Finder**: Navigate to target position (20 puzzles)
+- **Rotation_Match**: Rotate object to match reference orientation (48 puzzles)
+- **Slide_Puzzle**: Drag component to target position (31 puzzles)
+- **Coordinates**: Move object to specified coordinates (18 puzzles)
+- **Path_Finder**: Navigate to target position (10 puzzles)
 
 **Pattern Matching:**
-- **Bingo**: Swap positions to create matching lines (50 puzzles)
-- **Image_Matching**: Match similar images (23 puzzles)
-- **Patch_Select**: Select grid squares containing objects (42 puzzles)
-- **Dart_Count**: Select image where darts sum to target (30 puzzles)
+- **Bingo**: Swap positions to create matching lines (25 puzzles)
+- **Image_Matching**: Match similar images (19 puzzles)
+- **Patch_Select**: Select grid squares containing objects (20 puzzles)
+- **Dart_Count**: Select image where darts sum to target (20 puzzles)
 - **Object_Match**: Match number of objects to reference (20 puzzles)
 
 **Interactive Logic:**
-- **Select_Animal**: Identify specific animal in grid (20 puzzles)
-- **Place_Dot**: Place dot at specific location (20 puzzles)
+- **Select_Animal**: Identify specific animal in grid (30 puzzles)
+- **Place_Dot**: Place dot at specific location (32 puzzles)
 - **Connect_icon**: Connect matching icons (20 puzzles)
 - **Click_Order**: Click items in specific sequence (20 puzzles)
-- **Hold_Button**: Hold button for specified duration (20 puzzles)
+- **Hold_Button**: Hold button for specified duration (10 puzzles)
 - **Misleading_Click**: Click correct area, avoiding distractions (20 puzzles)
-- **Pick_Area**: Select specific area in image (20 puzzles)
+- **Pick_Area**: Select specific area in image (30 puzzles)
 
 **Total**: 463 puzzles across 20 types
 
@@ -133,21 +134,21 @@ The benchmark includes 20 interactive puzzle types testing different cognitive c
 
 The included pseudo purple agent supports two modes:
 
-**Ground Truth Mode** (default):
-```bash
---mode ground_truth
-```
-- Returns correct answers from pre-loaded metadata
-- Achieves 100% accuracy (463/463 puzzles)
-- Used for infrastructure validation and baseline establishment
-
-**Fixed Mode**:
+**Fixed Mode** (default):
 ```bash
 --mode fixed
 ```
 - Returns same answer for all puzzles of each type
 - Achieves ~13% accuracy (62/463 puzzles)
-- Demonstrates naive baseline without ground truth access
+- Demonstrates naive baseline without vision models or browser automation tools
+
+**Ground Truth Mode**:
+```bash
+--mode ground_truth
+```
+- Returns correct answers from pre-loaded metadata
+- Achieves 100% accuracy (463/463 puzzles)
+- Used to verify the correctness of the judge's answer evaluation logic
 
 ## Dataset Information
 
@@ -195,10 +196,10 @@ puzzle_types = []
 [[participants]]
 role = "opencaptcha_solver"
 endpoint = "http://127.0.0.1:9020"
-# Ground truth mode (100% accuracy):
-cmd = "python3 scenarios/opencaptchaworld/opencaptchaworld_solver.py --host 0.0.0.0 --port 9020 --mode ground_truth"
 # Fixed mode (~13% accuracy):
-# cmd = "python3 scenarios/opencaptchaworld/opencaptchaworld_solver.py --host 0.0.0.0 --port 9020 --mode fixed"
+cmd = "python3 scenarios/opencaptchaworld/opencaptchaworld_solver.py --host 0.0.0.0 --port 9020 --mode fixed"
+# Ground truth mode (100% accuracy):
+# cmd = "python3 scenarios/opencaptchaworld/opencaptchaworld_solver.py --host 0.0.0.0 --port 9020 --mode ground_truth"
 ```
 
 ## Project Structure
@@ -241,7 +242,7 @@ For debugging, start agents in separate terminals:
 python scenarios/opencaptchaworld/opencaptchaworld_judge.py --host 0.0.0.0 --port 9010
 
 # Terminal 2: Start purple agent (baseline solver)
-python scenarios/opencaptchaworld/opencaptchaworld_solver.py --host 0.0.0.0 --port 9020 --mode ground_truth
+python scenarios/opencaptchaworld/opencaptchaworld_solver.py --host 0.0.0.0 --port 9020 --mode fixed
 
 # Terminal 3: Run evaluation client
 python -m agentbeats.client_cli scenarios/opencaptchaworld/scenario.toml
@@ -249,6 +250,23 @@ python -m agentbeats.client_cli scenarios/opencaptchaworld/scenario.toml
 # Optional: View puzzle in browser
 # http://localhost:9010/get_puzzle?type=Dice_Count&id=dice1.png
 ```
+
+### Building Docker Image
+
+If you want to build the Docker image locally instead of using the pre-built image:
+
+```bash
+# Ensure Git LFS files are downloaded first
+git lfs pull
+
+# Build the image
+docker build -t agentified-opencaptchaworld:latest .
+
+# Verify the build
+docker run agentified-opencaptchaworld:latest --help
+```
+
+You can then use your locally built image by replacing `ghcr.io/gmsh/agentified-opencaptchaworld:latest` with `agentified-opencaptchaworld:latest` in the Docker commands.
 
 ### Extracting Ground Truth
 
@@ -270,39 +288,9 @@ Replace the pseudo agent with a real solver that:
 
 The solver must implement the A2A protocol and accept puzzle URLs via HTTP.
 
-## Docker
+### Docker Interactive Debugging
 
-### Build Image
-
-```bash
-docker build -t agentified-opencaptchaworld:latest .
-```
-
-### Run Green Agent (Default)
-
-```bash
-# Start judge on port 9010
-docker run -p 9010:9010 agentified-opencaptchaworld:latest
-```
-
-### Run Purple Agent (Override CMD)
-
-```bash
-# Start solver on port 9020
-docker run -p 9020:9020 agentified-opencaptchaworld:latest \
-  python scenarios/opencaptchaworld/opencaptchaworld_solver.py \
-  --host 0.0.0.0 --port 9020 --mode ground_truth
-```
-
-### Run Complete Scenario
-
-```bash
-# Orchestrated evaluation (both agents internally)
-docker run agentified-opencaptchaworld:latest \
-  python -m agentbeats.run_scenario scenarios/opencaptchaworld/scenario.toml
-```
-
-### Interactive Debugging
+For debugging the Docker container:
 
 ```bash
 docker run -it --entrypoint /bin/bash agentified-opencaptchaworld:latest
@@ -347,12 +335,12 @@ This branch (agentbeats/submission-v1) is designed for submission to [AgentBeats
 
 1. **Abstract**: Brief description of 20 puzzle types and evaluation approach
 2. **GitHub Repository**: Complete source code with README and Docker support
-3. **Baseline Purple Agent**: Two modes (ground_truth: 100%, fixed: ~13%)
+3. **Baseline Purple Agent**: Two modes (fixed: ~13% naive baseline, ground_truth: 100% for verification)
 4. **Docker Image**: Fully automated green agent execution
 5. **AgentBeats Registration**: Register green and baseline purple agents
 
 > [!NOTE]  
-> For other source files that have not been submitted to AgentBeats yet (e.g., agentified OCR captcha), please refer to the main branch:[the main branch](https://github.com/gmsh/agentified-opencaptchaworld/tree/main).
+> For other source files that have not been submitted to AgentBeats yet (e.g., agentified OCR captcha), please refer to [the main branch](https://github.com/gmsh/agentified-opencaptchaworld/tree/main).
 
 ## References
 
@@ -366,4 +354,4 @@ MIT License - see LICENSE file for details
 
 ## Acknowledgments
 
-This benchmark was built using the [Agentbeats framework](https://agentbeats.org). The original tutorial and multi-scenario demo can be found in the git history (see `README.agentbeats.md` in earlier commits).
+This benchmark was built using the [Agentbeats framework](https://agentbeats.org). The original tutorial and multi-scenario demo can be found in the main branch (see `README.agentbeats.md` in earlier commits).
