@@ -4,7 +4,7 @@ on:
   pull_request:
   push:
     branches:
-      - main
+      - agentbeats/submission-v1
     tags:
       - 'v*'  # Trigger on version tags like v1.0.0, v1.1.0
 
