@@ -10,6 +10,14 @@ The benchmark implements:
 - **Green Agent (Judge)**: Embedded puzzle server with evaluation logic (port 9010)
 - **Purple Agent (Solver)**: Baseline solver with two modes - *fixed mode* (naive baseline without vision/browser tools, ~13% accuracy) and *ground_truth mode* (verifies judge's evaluation logic, 100% accuracy)
 
+Demo video:
+
+
+
+https://github.com/user-attachments/assets/d84158dd-bc3c-4fac-ae99-d656d6404ce7
+
+
+
 ## Prerequisites
 
 - **Python 3.13+**
@@ -324,6 +332,9 @@ This branch (agentbeats/submission-v1) is designed for submission to [AgentBeats
 3. **Baseline Purple Agent**: Two modes (fixed: ~13% naive baseline, ground_truth: 100% for verification)
 4. **Docker Image**: Fully automated green agent execution
 5. **AgentBeats Registration**: Register green and baseline purple agents
+6. **Demo Video on YouTube**: [https://www.youtube.com/watch?v=ZRC3U3HaJXo](https://www.youtube.com/watch?v=ZRC3U3HaJXo)
+
+[![Watch the video](https://img.youtube.com/vi/ZRC3U3HaJXo/hqdefault.jpg)](https://www.youtube.com/watch?v=ZRC3U3HaJXo)
 
 > [!NOTE]  
 > For other source files that have not been submitted to AgentBeats yet (e.g., agentified OCR captcha), please refer to [the main branch](https://github.com/gmsh/agentified-opencaptchaworld/tree/main).
