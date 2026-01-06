@@ -323,21 +323,14 @@ docker run -it --entrypoint /bin/bash agentified-opencaptchaworld:latest
   docker build --no-cache -t agentified-opencaptchaworld .
   ```
 
-## Submission Components
+## Demo Video on YouTube
 
-This branch (agentbeats/submission-v1) is designed for submission to [AgentBeats](https://agentbeats.org):
-
-1. **Abstract**: Brief description of 20 puzzle types and evaluation approach
-2. **GitHub Repository**: Complete source code with README and Docker support
-3. **Baseline Purple Agent**: Two modes (fixed: ~13% naive baseline, ground_truth: 100% for verification)
-4. **Docker Image**: Fully automated green agent execution
-5. **AgentBeats Registration**: Register green and baseline purple agents
-6. **Demo Video on YouTube**: [https://www.youtube.com/watch?v=ZRC3U3HaJXo](https://www.youtube.com/watch?v=ZRC3U3HaJXo)
+[https://www.youtube.com/watch?v=ZRC3U3HaJXo](https://www.youtube.com/watch?v=ZRC3U3HaJXo)
 
 [![Watch the video](https://img.youtube.com/vi/ZRC3U3HaJXo/hqdefault.jpg)](https://www.youtube.com/watch?v=ZRC3U3HaJXo)
 
 > [!NOTE]  
-> For other source files that have not been submitted to AgentBeats yet (e.g., agentified OCR captcha), please refer to [the main branch](https://github.com/gmsh/agentified-opencaptchaworld/tree/main).
+> This branch (agentbeats/submission-v1) is designed for submission to [AgentBeats](https://agentbeats.org). For other source files that have not been submitted to AgentBeats yet (e.g., agentified OCR captcha), please refer to [the main branch](https://github.com/gmsh/agentified-opencaptchaworld/tree/main).
 
 ## References
 
