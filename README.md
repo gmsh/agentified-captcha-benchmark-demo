@@ -6,7 +6,7 @@ Agent-based benchmark for interactive CAPTCHA solving using the A2A (Agent-to-Ag
 
 This benchmark evaluates AI agents' ability to solve interactive visual CAPTCHA puzzles from the [OpenCaptchaWorld dataset](https://github.com/MetaAgentX/OpenCaptchaWorld). It tests 463 puzzles across 20 distinct types, each requiring different cognitive capabilities ranging from visual perception to spatial reasoning and interactive problem-solving.
 
-The benchmark implements:
+The repo implements:
 - **Green Agent (Judge)**: Embedded puzzle server with evaluation logic (port 9010)
 - **Purple Agent (Solver)**: Baseline solver with two modes - *fixed mode* (naive baseline without vision/browser tools, ~13% accuracy) and *ground_truth mode* (verifies judge's evaluation logic, 100% accuracy)
 
@@ -329,14 +329,35 @@ docker run -it --entrypoint /bin/bash agentified-opencaptchaworld:latest
 
 [![Watch the video](https://img.youtube.com/vi/ZRC3U3HaJXo/hqdefault.jpg)](https://www.youtube.com/watch?v=ZRC3U3HaJXo)
 
-> [!NOTE]  
-> This branch (agentbeats/submission-v1) is designed for submission to [AgentBeats](https://agentbeats.org). For other source files that have not been submitted to AgentBeats yet (e.g., agentified OCR captcha), please refer to [the main branch](https://github.com/gmsh/agentified-opencaptchaworld/tree/main).
+> [!NOTE]
+> This branch (agentbeats/submission-v1) is designed for submission to [AgentBeats](https://agentbeats.dev). For other source files that have not been submitted to AgentBeats yet (e.g., agentified OCR captcha), please refer to [the main branch](https://github.com/gmsh/agentified-opencaptchaworld/tree/main).
+
+## Related Repositories
+
+| Repository | Description |
+|------------|-------------|
+| [Purple Agent Baseline](https://github.com/gmsh/agentbeats-agentified-opencaptchaworld-baseline-solver) | Standalone baseline solver (extracted from this repo) |
+| [Leaderboard](https://github.com/gmsh/agentbeats-agentified-opencaptchaworld-leaderboard) | Submission tracking and automated assessment |
+
+### AgentBeats URLs
+
+- **Green Agent**: https://agentbeats.dev/gmsh/agentified-opencaptchaworld-benchmark
+- **Purple Agent Baseline**: https://agentbeats.dev/gmsh/baseline-solver-for-agentified-opencaptchaworld-benchmark
+- **Leaderboard**: https://agentbeats.dev/gmsh/agentified-opencaptchaworld-benchmark
 
 ## References
 
-- [A2A Protocol Documentation](https://a2a-protocol.org/latest/)
-- [OpenCaptchaWorld Dataset](https://github.com/MetaAgentX/OpenCaptchaWorld)
-- [AgentBeats Platform](https://agentbeats.org)
+### The Original OpenCaptchaWorld Dataset
+
+> Yaxin Luo et al. "Open CaptchaWorld: A Comprehensive Web-based Platform for Testing and Benchmarking Multimodal LLM Agents." NeurIPS 2025.
+
+- arXiv: https://arxiv.org/abs/2505.24878
+- GitHub: https://github.com/MetaAgentX/OpenCaptchaWorld
+
+### AgentBeats & Competition
+
+- AgentBeats Platform: https://agentbeats.dev
+- AgentX-AgentBeats Competition: https://rdi.berkeley.edu/agentx-agentbeats
 
 ## License
 
@@ -344,4 +365,4 @@ MIT License - see LICENSE file for details
 
 ## Acknowledgments
 
-This benchmark was built using the [Agentbeats framework](https://agentbeats.org). The original tutorial and multi-scenario demo can be found in the main branch (see `README.agentbeats.md` in earlier commits).
+This benchmark was built using the [AgentBeats framework](https://agentbeats.dev). The original tutorial and multi-scenario demo can be found in the main branch (see `README.agentbeats.md` in earlier commits).
